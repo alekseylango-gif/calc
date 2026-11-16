@@ -250,6 +250,51 @@ nav.tabs button[aria-current=page]{color:var(--a-txt)}
 #giftBox .chip small{font-weight:500;opacity:.7}
 .gedit .field{padding-top:8px;padding-bottom:8px}
 .gedit+.gedit{border-top:1px solid var(--line)}
+/* ---- type scale and 4/8 spacing grid ---- */
+:root{--fs-title:30px;--fs-body:16px;--fs-ctl:15px;--fs-sub:13px;--fs-caps:12px}
+body{padding-top:calc(env(safe-area-inset-top,0px) + 12px)}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:4px 4px 0;margin:0 auto 4px}
+header.top h1{margin:0;font:700 var(--fs-title)/1.1 var(--disp);letter-spacing:-.01em;min-width:0}
+.mono{width:44px;height:44px;flex:none;border-radius:50%;display:grid;place-items:center;font:700 14px/1 var(--disp);letter-spacing:.04em;color:var(--a-ink);
+  background:radial-gradient(circle at 30% 25%,color-mix(in srgb,var(--a) 70%,#fff),var(--a) 55%,color-mix(in srgb,var(--a) 70%,#000));
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--a) 50%,transparent),0 0 0 5px color-mix(in srgb,var(--a) 16%,transparent)}
+.gt{font-size:var(--fs-caps);line-height:16px;letter-spacing:.07em;margin:28px 16px 8px}
+.gt:first-child{margin-top:16px}
+.lbl{font-size:var(--fs-body);font-weight:600;line-height:22px}
+.sub,.foot{font-size:var(--fs-sub);line-height:18px}
+.sub{margin-top:2px}
+.foot{margin:8px 16px 0}
+.row{padding:12px 16px;min-height:56px;gap:12px}
+.field{padding:12px 16px;gap:8px}
+.field>label,.field .flbl,.two label{font-size:var(--fs-sub);line-height:18px}
+.in{font-size:var(--fs-body)}
+.in.title{font-size:20px}
+.seg button{font-size:var(--fs-ctl);font-weight:600;white-space:nowrap;min-height:40px;line-height:18px}
+.seg button small{font-size:11px;line-height:14px;margin-top:1px}
+.seg.big button{min-height:44px;font-size:var(--fs-ctl)}
+.chip{font-size:var(--fs-ctl);line-height:18px;padding:9px 14px}
+.btn{font-size:var(--fs-body);height:48px}
+.stp input,.money input{font-size:17px;font-weight:600}
+.stp button{height:44px}
+.lines li{padding:8px 16px}
+.lines .d{font-size:var(--fs-sub);line-height:18px;margin-top:2px}
+.inforow{font-size:var(--fs-sub);line-height:18px;padding:6px 16px}
+.cmp span{font-size:var(--fs-caps);line-height:16px}
+.cmp b{font-size:var(--fs-ctl)}
+.dock .grow small{font-size:var(--fs-caps)}
+nav.tabs button{font-size:11px;line-height:13px}
+/* date field with a visible prompt when empty (iOS shows nothing) */
+.datewrap{position:relative;flex:none}
+.datewrap .in{width:150px;text-align:left}
+.datewrap .dph{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mut);font-size:var(--fs-body);pointer-events:none}
+.datewrap.has .dph{display:none}
+.datewrap:not(.has) .in{color:transparent}
+/* accent swatches on one row */
+.sw-acc{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:8px;justify-items:center}
+.sw-acc button,.sw-acc .custom{width:100%;max-width:34px;height:auto;aspect-ratio:1/1}
+/* history summary tiles: equal height, number on the baseline */
+.hsum div{display:flex;flex-direction:column;justify-content:space-between;min-height:72px;gap:6px}
+.hsum span{line-height:16px}
 body[data-tab=hist] #v-hist{display:block}
 #v-hist{max-width:720px;margin:0 auto}
 .warn{color:#E5484D;font-weight:600}
@@ -292,8 +337,8 @@ body[data-tab=hist] #v-hist{display:block}
 <body data-tab="calc">
 
 <header class="top">
-  <div class="kicker" id="hKicker">lango.show</div>
   <h1 id="hTitle">Расчёт</h1>
+  <span class="mono" id="hMono" role="img" aria-label="Алексей Ланго">АЛ</span>
 </header>
 
 <main>
@@ -305,7 +350,7 @@ body[data-tab=hist] #v-hist{display:block}
     <div class="chips" id="chips"></div>
     <div class="row"><span class="lbl grow">Клиент</span><input class="in" style="max-width:60%" data-c="client" id="cClient" placeholder="необязательно" autocomplete="off"></div>
     <div class="row"><div class="grow"><div class="lbl">Статус</div><div class="sub" id="holdHint"></div></div><select class="in" id="cStatus"></select></div>
-    <div class="row"><div class="grow"><div class="lbl">Дата</div><div class="sub" id="dayHint"></div><div class="sub warn" id="dateWarn" hidden></div></div><input class="in" type="date" id="cDate"></div>
+    <div class="row"><div class="grow"><div class="lbl">Дата</div><div class="sub" id="dayHint"></div><div class="sub warn" id="dateWarn" hidden></div></div><div class="datewrap" id="dateWrap"><input class="in" type="date" id="cDate" aria-label="Дата"><span class="dph">Выбрать</span></div></div>
     <div class="row" style="display:block"><div class="seg" id="daySeg" role="group" aria-label="Тип дня">
       <button type="button" data-day="weekday">Будни<small id="kWd">×1</small></button>
       <button type="button" data-day="weekend">Выходной<small id="kWe"></small></button>
@@ -360,9 +405,9 @@ body[data-tab=hist] #v-hist{display:block}
 <section class="view" id="v-client" aria-label="Для клиента">
   <div class="gt">Вид карточки</div>
   <div class="seg big" id="modeSeg" role="group" aria-label="Вид карточки">
-    <button type="button" data-mode="icons">Что входит</button>
+    <button type="button" data-mode="icons">Состав</button>
     <button type="button" data-mode="list">Смета</button>
-    <button type="button" data-mode="price">Только цена</button>
+    <button type="button" data-mode="price">Цена</button>
     <button type="button" data-mode="variants" id="modeVar" hidden>Варианты</button>
   </div>
   <div class="preview"><img id="cardImg" alt="Карточка расчёта для клиента"></div>
@@ -818,7 +863,7 @@ function buildSvcList(){
 function refreshCalc(r){
   if (document.activeElement !== $('cTitle')) $('cTitle').value = C.title;
   if (document.activeElement !== $('cClient')) $('cClient').value = C.client;
-  $('cDate').value = C.date || '';
+  $('cDate').value = C.date || ''; $('dateWrap').classList.toggle('has', !!C.date);
   if (document.activeElement !== $('cGuests')) $('cGuests').value = C.guests;
   if (document.activeElement !== $('cHours')) $('cHours').value = C.hours;
   if (document.activeElement !== $('cDisc')) $('cDisc').value = C.disc;
@@ -829,12 +874,12 @@ function refreshCalc(r){
   if (C.dayManual){
     hint.append('Тип дня выбран вручную. ');
     if (r.auto){ const b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.textContent = 'Вернуть по дате'; b.onclick = () => { C.dayManual = ''; update(); }; hint.append(b); }
-  } else hint.textContent = r.auto ? r.auto.why + ' → ' + DAY_NAMES[r.auto.type].toLowerCase() : 'Тип дня определится по дате';
+  } else hint.textContent = r.auto ? r.auto.why + ' → ' + DAY_NAMES[r.auto.type].toLowerCase() : 'Тип дня по дате';
   // status, hold and date clash
   const cs = $('cStatus'); if (!cs.options.length) cs.innerHTML = STATUSES.map(s => '<option value="'+s[0]+'">'+s[1]+'</option>').join('');
   cs.value = C.status || 'draft';
   const hu = holdUntil(C);
-  $('holdHint').textContent = hu ? (hu < new Date() ? 'Срок брони прошёл ' + dmy(hu) : 'Дату держу до ' + dmy(hu)) : (C.status === 'paid' ? 'Дата забронирована' : 'Сохраняется автоматически');
+  $('holdHint').textContent = hu ? (hu < new Date() ? 'Срок брони прошёл ' + dmy(hu) : 'Дату держу до ' + dmy(hu)) : (C.status === 'paid' ? 'Дата забронирована' : 'Автосохранение');
   $('holdHint').className = 'sub' + (hu && hu < new Date() ? ' warn' : '');
   const cl = dateClash(C), dw = $('dateWarn');
   dw.hidden = !cl.length;
@@ -1364,7 +1409,8 @@ function applyTheme(){
   root.style.setProperty('--a-ink', lum(A) > .4 ? '#15110A' : '#FFFFFF');
   const dark = S.uiTheme === 'dark' || (S.uiTheme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
   root.style.setProperty('--a-txt', dark ? A : (lum(A) > .35 ? shade(A, .42) : A));
-  $('hKicker').textContent = S.brand || 'lango.show';
+  const ini = String(S.brand || 'Алексей Ланго').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'АЛ';
+  $('hMono').textContent = ini; $('hMono').setAttribute('aria-label', S.brand || 'lango.show');
 }
 
 /* ---------------- presentation ---------------- */
@@ -1389,7 +1435,7 @@ function renderHist(){
   const today = new Date(); today.setHours(0,0,0,0);
   const inWork = H.filter(h => ['draft','sent','think'].indexOf(h.C.status) >= 0);
   const paid = H.filter(h => h.C.status === 'paid' && (!h.C.date || parseDate(h.C.date) >= today));
-  $('hSum').innerHTML = '<div><span>В работе</span><b>'+inWork.length+'</b></div><div><span>Брони впереди</span><b>'+paid.length+'</b></div><div><span>Сумма броней</span><b>'+rub(paid.reduce((a,h) => a + (h.total || 0), 0))+'</b></div>';
+  $('hSum').innerHTML = '<div><span>В работе</span><b>'+inWork.length+'</b></div><div><span>Брони</span><b>'+paid.length+'</b></div><div><span>Сумма броней</span><b>'+rub(paid.reduce((a,h) => a + (h.total || 0), 0))+'</b></div>';
   document.querySelectorAll('#hFilter button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hf === hFilter)));
   let list = H.filter(h => hFilter === 'all' ? true : hFilter === 'work' ? ['draft','sent','think'].indexOf(h.C.status) >= 0 : hFilter === 'paid' ? h.C.status === 'paid' : ['done','lost'].indexOf(h.C.status) >= 0);
   list = list.slice().sort((a,b) => { const da = parseDate(a.C.date), db = parseDate(b.C.date); if (da && db) return hFilter === 'arch' ? db - da : da - db; if (da) return -1; if (db) return 1; return b.upd - a.upd; });
