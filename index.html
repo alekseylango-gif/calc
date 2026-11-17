@@ -757,12 +757,12 @@ const DEF_S = {
   kWeekend:1.2, kHoliday:1.5, rateRound:'smart',
   holidays:'01.01, 02.01, 03.01, 04.01, 05.01, 06.01, 07.01, 08.01, 23.02, 08.03, 01.05, 09.05, 12.06, 04.11, 31.12',
   extShow:true, extMode:'pct', extPct:70, graceOn:true, graceMin:30,
-  bookShow:true, ppMode:'pct', ppPct:30, ppRub:10000, validDays:7,
+  bookShow:true, ppMode:'pct', ppPct:50, ppRub:10000, validDays:7,
   bookNote:'Предоплату можно внести сразу, и дата закреплена за вами',
   qr:'', qrShow:true, qrCaption:'Видео и фото с моих мероприятий', qrLink:'',
   roundStep:1000, roundMode:'down',
   giftsOn:true, minProfit:0,
-  heroOn:true, heroAuto:{icons:'cool', price:'ok', variants:'smile', list:'point'}, heroesCustom:[], heroV:2,
+  heroOn:true, heroAuto:{icons:'cool', price:'ok', variants:'smile', list:'point'}, heroesCustom:[], heroV:2, ppV:2,
   gifts:[
     {id:'love', label:'Подарок молодожёнам', title:'Трек «История вашей любви»', events:'Свадьба',
      desc:'Вместе с вами и гостями пишем слова о вашей истории, из них делается трек. Я презентую его в танцевальной части вечера.',
@@ -814,6 +814,7 @@ try {
   if (!Array.isArray(S.tiers)) S.tiers = clone(DEF_S.tiers);
   if (!Array.isArray(S.gifts)) S.gifts = clone(DEF_S.gifts);
   S.heroAuto = Object.assign(clone(DEF_S.heroAuto), S.heroAuto || {}); if (!Array.isArray(S.heroesCustom)) S.heroesCustom = [];
+  if (v && v.S && !(v.S.ppV >= 2)){ S.ppMode = 'pct'; S.ppPct = 50; S.ppV = 2; }
   if (v && v.S && !(v.S.heroV >= 2)){ if (!S.heroAuto.list) S.heroAuto.list = 'point'; S.heroV = 2; } delete S.heroCorpOff;
   if (S.bookNote === 'Предоплату можно внести сразу, и дата закреплена за вами.') S.bookNote = DEF_S.bookNote;
   if (v && v.S && v.S.rateRound === 500 && v.S.tierSmooth === undefined) S.rateRound = 'smart';
