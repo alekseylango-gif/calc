@@ -297,6 +297,7 @@ nav.tabs button{font-size:11px;line-height:13px}
 .hsum span{line-height:16px}
 body[data-tab=hist] #v-hist{display:block}
 #v-hist{max-width:720px;margin:0 auto}
+
 .warn{color:#E5484D;font-weight:600}
 .okc{color:var(--a-txt);font-weight:600}
 #varSeg button{min-height:52px;font-size:13px}
@@ -332,6 +333,64 @@ body[data-tab=hist] #v-hist{display:block}
 .hsum div{background:var(--s);border-radius:16px;padding:10px 12px;box-shadow:var(--shadow)}
 .hsum span{display:block;font-size:12px;color:var(--mut);font-weight:600}
 .hsum b{font:700 17px/1.2 var(--disp)}
+/* ===== unslop pass: neutral scale, 3 text roles, one accent, 4px grid, type scale 11/12/13/14/16/18/24/32 ===== */
+:root{--mut:#62626A;--danger:#C2302E;--fs-title:32px;--fs-ctl:14px}
+@media (prefers-color-scheme:dark){:root:not([data-ui=light]){--mut:#A3A3AB;--danger:#FF7A75}}
+:root[data-ui=dark]{--mut:#A3A3AB;--danger:#FF7A75}
+:root[data-ui=light]{--mut:#62626A;--danger:#C2302E}
+/* type */
+header.top h1{font-size:32px;font-weight:600}
+.gt{text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;line-height:16px}
+.btn{font-weight:600}
+.stp input,.money input{font-size:16px;font-weight:600}
+.totalrow .v{font:600 24px/1 var(--disp)}
+.dock .grow b{font:600 24px/1.1 var(--disp)}
+.hsum b{font:600 18px/1.2 var(--disp)}
+.hdate b{font-weight:600}
+.cmp b{font-size:14px;font-weight:600}
+.seg button small{font-size:11px}
+#giftBox .chip small{font-size:12px}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;background:var(--s2);color:var(--ink)}
+/* colour: one accent, neutral surfaces, semantic red only for warnings */
+.warn,.btn.danger,.profit .inforow b.neg{color:var(--danger)}
+.mono{background:var(--a);color:var(--a-ink);box-shadow:none;font:600 14px/1 var(--disp);letter-spacing:.02em}
+.ic{background:var(--s2);color:var(--ink);border-radius:10px}
+.svc.off .ic{background:var(--s2);color:var(--mut)}
+/* icons: one size, one stroke */
+.ic svg,.btn svg,.icgrid button svg{width:20px;height:20px;stroke-width:1.5}
+nav.tabs svg{width:24px;height:24px;stroke-width:1.5}
+/* radii: controls 8-12, cards 16, floating bars 20 */
+.group,.preview,.hsum div{border-radius:16px}
+.in,.stp,.money,.icgrid button,.cmp div,.hdate{border-radius:10px}
+.btn{border-radius:12px}
+.seg{border-radius:12px;padding:4px;gap:4px}
+.seg button{border-radius:8px}
+.dock{border-radius:20px}
+pre.tp{border-radius:16px}
+/* spacing on the 4px grid */
+.chip{padding:8px 16px}
+.hdate{padding:8px 0}
+.cmp div{padding:8px 12px}
+.cmp{gap:8px}
+.hsum div{padding:12px}
+.lines{padding:8px 0}
+/* touch targets 44 on touch screens only */
+@media (hover:none) and (pointer:coarse){
+  .seg button{min-height:44px}
+  .svc .more .stp button{width:44px}
+  .hacts .btn,.hacts select.in,.sact .btn{height:44px}
+  .sw-acc{grid-template-columns:repeat(5,44px);justify-content:start}
+  .sw-acc button,.sw-acc .custom{max-width:44px;width:44px}
+  .icgrid{grid-template-columns:repeat(auto-fill,minmax(44px,1fr))}
+  .icgrid button{height:44px}
+  .tier .x{width:44px;height:44px}
+}
+b,strong{font-weight:600}
+.cl .clbl{text-transform:none;letter-spacing:0;font-size:13px;font-weight:500}
+.hdate span{text-transform:none;font-size:11px}
+.cl .chip{padding:8px 12px}
+nav.tabs button{gap:4px}
+@media (hover:none) and (pointer:coarse){ .chip{min-height:44px} .tier button.x{width:44px;height:44px} }
 </style>
 </head>
 <body data-tab="calc">
@@ -539,7 +598,7 @@ body[data-tab=hist] #v-hist{display:block}
   <div class="gt">Приложение</div>
   <div class="group">
     <div class="row"><span class="lbl grow">Тема</span><div class="seg" id="uiSeg" style="width:220px"><button type="button" data-ui="auto">Авто</button><button type="button" data-ui="light">Светлое</button><button type="button" data-ui="dark">Тёмное</button></div></div>
-    <div class="field"><div><div class="lbl">Резервная копия</div><div class="sub">Все настройки и цены одним файлом</div></div>
+    <div class="field"><div><div class="lbl">Резервная копия</div><div class="sub">Настройки, цены и все расчёты одним файлом. Сохраняйте раз в неделю</div></div>
       <div class="actions" style="margin-top:4px"><button type="button" class="btn" id="exportBtn">Сохранить</button><button type="button" class="btn" id="importBtn">Загрузить</button></div></div>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
   </div>
@@ -628,20 +687,20 @@ const DEF_S = {
   holidays:'01.01, 02.01, 03.01, 04.01, 05.01, 06.01, 07.01, 08.01, 23.02, 08.03, 01.05, 09.05, 12.06, 04.11, 31.12',
   extShow:true, extMode:'pct', extPct:70, graceOn:true, graceMin:30,
   bookShow:true, ppMode:'pct', ppPct:30, ppRub:10000, validDays:7,
-  bookNote:'Предоплату можно внести сразу, и дата закреплена за вами.',
+  bookNote:'Предоплату можно внести сразу, и дата закреплена за вами',
   qr:'', qrShow:true, qrCaption:'Видео и фото с моих мероприятий', qrLink:'',
   roundStep:1000, roundMode:'down',
   giftsOn:true, minProfit:0,
   gifts:[
     {id:'love', label:'Подарок молодожёнам', title:'Трек «История вашей любви»', events:'Свадьба',
      desc:'Вместе с вами и гостями пишем слова о вашей истории, из них делается трек. Я презентую его в танцевальной части вечера.',
-     note:'Слова и факты согласуем минимум за 7-10 дней до события.'},
+     note:'Слова и факты согласуем минимум за 7-10 дней до события'},
     {id:'life', label:'Подарок к празднику', title:'Трек «История вашей жизни»', events:'День рождения, Юбилей',
      desc:'Вместе с вами, близкими и гостями пишем слова об имениннике, из них делается трек. Я презентую его в танцевальной части вечера.',
-     note:'Слова и факты согласуем минимум за 7-10 дней до события.'},
+     note:'Слова и факты согласуем минимум за 7-10 дней до события'},
     {id:'corp', label:'Подарок к корпоративу', title:'«Гимн вашей компании»', events:'Корпоратив, Новый год',
      desc:'Вместе с вами и коллегами пишем слова о вашей команде, из них делается трек. Я презентую его в танцевальной части вечера.',
-     note:'Слова и факты согласуем минимум за 7-10 дней до события.'}
+     note:'Слова и факты согласуем минимум за 7-10 дней до события'}
   ],
   services:DEF_SERVICES
 };
@@ -681,11 +740,13 @@ try {
   S.services = S.services.map(normService);
   if (!Array.isArray(S.tiers)) S.tiers = clone(DEF_S.tiers);
   if (!Array.isArray(S.gifts)) S.gifts = clone(DEF_S.gifts);
+  if (S.bookNote === 'Предоплату можно внести сразу, и дата закреплена за вами.') S.bookNote = DEF_S.bookNote;
+  S.gifts.forEach(g => { if (g.note === 'Слова и факты согласуем минимум за 7-10 дней до события.') g.note = 'Слова и факты согласуем минимум за 7-10 дней до события'; });
   if (v && v.C){ C = Object.assign(newCalc(), v.C); }
 } catch(e){ S = clone(DEF_S); }
 if (!C){
   C = newCalc();
-  Object.assign(C, {title:'Свадьба', guests:40, hours:5});
+  Object.assign(C, {title:'Свадьба', guests:40, hours:5, example:true});
   if (C.sel.light){ C.sel.light.on = true; C.sel.light.qty = 1; }
 }
 function fixC(){
@@ -700,7 +761,7 @@ let H = [];
 try { H = JSON.parse(localStorage.getItem(HKEY) || '[]'); if (!Array.isArray(H)) H = []; } catch(e){ H = []; }
 const hasContent = c => !!(c.title || c.client || c.date);
 function upsertHist(){
-  if (!hasContent(C)) return;
+  if (!hasContent(C) || C.example) return;
   const tot = C.vars ? C.vars.list.map((v, i) => calcV(i).total) : [calc().total];
   const rec = {id:C.id, upd:Date.now(), total:C.vars ? tot[Math.max(0, C.vars.rec)] || tot[0] : tot[0], from:C.vars ? Math.min(...tot) : 0, C:JSON.parse(JSON.stringify(C))};
   const i = H.findIndex(h => h.id === C.id);
@@ -854,7 +915,7 @@ function buildSvcList(){
           '<input class="in" data-role="cname" placeholder="'+esc(s.cnames.length ? 'Или своё название' : s.name)+'">' +
           '<div class="clbl">Описание</div><div class="chips"><button type="button" class="chip" data-desc="none">Без описания</button>' + s.descs.map((d,i) => '<button type="button" class="chip" data-desc="'+i+'">'+esc(d)+'</button>').join('') + '</div>' +
           '<input class="in" data-role="desc" placeholder="Или своё описание">' +
-          (ht ? '<div class="hrow"><div class="grow"><div class="lbl" style="font-size:15px">Скрыть от клиента</div><div class="sub">Сумма войдёт в цену: '+esc(htName)+'</div></div><label class="sw"><input type="checkbox" data-role="hide" aria-label="Скрыть от клиента"><span></span></label></div>' : '') +
+          (ht ? '<div class="hrow"><div class="grow"><div class="lbl">Скрыть от клиента</div><div class="sub">Сумма войдёт в цену: '+esc(htName)+'</div></div><label class="sw"><input type="checkbox" data-role="hide" aria-label="Скрыть от клиента"><span></span></label></div>' : '') +
         '</div></details>' +
       '</div>' +
     '</div>';
@@ -872,7 +933,7 @@ function refreshCalc(r){
   $('kWe').textContent = kfmt(dayFactor('weekend')); $('kHo').textContent = kfmt(dayFactor('holiday'));
   const hint = $('dayHint'); hint.textContent = '';
   if (C.dayManual){
-    hint.append('Тип дня выбран вручную. ');
+    hint.append('Тип дня выбран вручную · ');
     if (r.auto){ const b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.textContent = 'Вернуть по дате'; b.onclick = () => { C.dayManual = ''; update(); }; hint.append(b); }
   } else hint.textContent = r.auto ? r.auto.why + ' → ' + DAY_NAMES[r.auto.type].toLowerCase() : 'Тип дня по дате';
   // status, hold and date clash
@@ -931,7 +992,7 @@ function refreshCalc(r){
 
   const ul = $('sumLines'); ul.innerHTML = '';
   const add = (name, d, v, cls) => { const li = document.createElement('li'); if (cls) li.className = cls; li.innerHTML = '<span>'+esc(name)+(d ? '<span class="d">'+esc(d)+'</span>' : '')+'</span><b>'+esc(v)+'</b>'; ul.appendChild(li); };
-  if (!r.items.length) add('Включите хотя бы одну услугу', '', '');
+  if (!r.items.length) add(S.services.some(s => selOf(C, s).on) && !r.hrs ? 'Укажите длительность мероприятия' : 'Включите хотя бы одну услугу', '', '');
   r.items.forEach(it => add(it.s.name, it.s.unit === 'fixed' ? '' : hfmt(it.qty) + ' ' + unitShort(it.s) + ' × ' + rub(it.baseRate), rub(it.base)));
   if (r.kExtra) add(DAY_NAMES[r.dayType] + ', ' + kfmt(r.k), 'Ставка округлена до ' + rub(num(S.rateRound) || 1), '+' + rub(r.kExtra));
   if (r.discount) add('Скидка', C.discType === 'pct' ? num(C.disc) + '% от суммы' : 'фиксированная', rub(r.discount), 'minus');
@@ -964,9 +1025,11 @@ function refreshCalc(r){
 }
 
 /* ---------------- client card (canvas) ---------------- */
-function hexRgb(h){ h = String(h).replace('#',''); if (h.length === 3) h = h.split('').map(c => c+c).join(''); const n = parseInt(h, 16) || 0; return [n>>16 & 255, n>>8 & 255, n & 255]; }
+function hexRgb(h){ const mm = String(h).match(/rgb\((\d+),\s*(\d+),\s*(\d+)/); if (mm) return [+mm[1], +mm[2], +mm[3]]; h = String(h).replace('#',''); if (h.length === 3) h = h.split('').map(c => c+c).join(''); const n = parseInt(h, 16) || 0; return [n>>16 & 255, n>>8 & 255, n & 255]; }
 const rgba = (h, a) => { const [r,g,b] = hexRgb(h); return 'rgba('+r+','+g+','+b+','+a+')'; };
 function shade(h, f){ const [r,g,b] = hexRgb(h); const m = v => Math.round(v * (1 - f)); return 'rgb('+m(r)+','+m(g)+','+m(b)+')'; }
+function contrast(a, b){ const l1 = lum(a), l2 = lum(b); return (Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05); }
+function inkOn(A){ return contrast(A, '#15110A') >= contrast(A, '#FFFFFF') ? '#15110A' : '#FFFFFF'; }
 function lum(h){ const [r,g,b] = hexRgb(h).map(v => { v /= 255; return v <= .03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4); }); return .2126*r + .7152*g + .0722*b; }
 function rr(x, X, Y, w, h, r){ x.beginPath(); x.moveTo(X+r, Y); x.arcTo(X+w, Y, X+w, Y+h, r); x.arcTo(X+w, Y+h, X, Y+h, r); x.arcTo(X, Y+h, X, Y, r); x.arcTo(X, Y, X+w, Y, r); x.closePath(); }
 function wrap(x, text, maxW, maxLines){
@@ -1023,17 +1086,14 @@ function drawCard(){
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H0;
   const x = cv.getContext('2d');
   x.fillStyle = th.bg; x.fillRect(0, 0, W, H0);
-  const g = x.createRadialGradient(W*.88, 60, 0, W*.88, 60, 760);
-  g.addColorStop(0, rgba(A, dark ? .26 : .2)); g.addColorStop(1, rgba(A, 0));
-  x.fillStyle = g; x.fillRect(0, 0, W, 900);
   x.textBaseline = 'alphabetic'; x.textAlign = 'left';
 
   let y = P + 26;
-  x.font = F(600, 26, 'd'); LS(x, '5px'); x.fillStyle = At;
-  x.fillText(String(S.brand || '').toUpperCase(), P, y); LS(x, '0px');
+  x.font = F(600, 28, 'd'); x.fillStyle = At;
+  x.fillText(String(S.brand || ''), P, y);
   if (S.tagline){ y += 44; x.font = F(500, 27); x.fillStyle = th.mut; x.fillText(S.tagline, P, y); }
   y += 92;
-  x.font = F(700, 62, 'd'); x.fillStyle = th.ink;
+  x.font = F(600, 62, 'd'); x.fillStyle = th.ink;
   wrap(x, C.title || 'Мероприятие', CW, 3).forEach((l, i) => { if (i) y += 76; x.fillText(l, P, y); });
   if (C.client){ y += 56; x.font = F(500, 34); x.fillStyle = th.ink; wrap(x, C.client, CW, 2).forEach((l,i) => { if (i) y += 44; x.fillText(l, P, y); }); }
   const meta = metaParts(r);
@@ -1048,8 +1108,8 @@ function drawCard(){
     x.font = F(500, 28); x.fillStyle = th.mut; x.fillText('Стоимость', P + pad, yy);
     if (hasOld){ yy += 50; x.font = F(500, 34); const s = rub(old); x.fillText(s, P + pad, yy); const w = x.measureText(s).width; x.strokeStyle = th.mut; x.lineWidth = 3; x.beginPath(); x.moveTo(P + pad - 4, yy - 11); x.lineTo(P + pad + w + 4, yy - 11); x.stroke(); }
     yy += 22 + 80;
-    let fs = 88; x.font = F(700, fs, 'd');
-    while (x.measureText(rub(m.total)).width > CW - 2*pad && fs > 40){ fs -= 4; x.font = F(700, fs, 'd'); }
+    let fs = 88; x.font = F(600, fs, 'd');
+    while (x.measureText(rub(m.total)).width > CW - 2*pad && fs > 40){ fs -= 4; x.font = F(600, fs, 'd'); }
     x.fillStyle = At; x.fillText(rub(m.total), P + pad, yy);
     return y0 + h;
   }
@@ -1067,7 +1127,7 @@ function drawCard(){
     x.fillStyle = rgba(A, dark ? .18 : .16); rr(x, P + pad, y0 + pad, 84, 84, 24); x.fill();
     drawIcon(x, 'gift', P + pad + 42, y0 + pad + 42, 46, At);
     let yy = y0 + pad + (head - 30 - tl.length*40)/2 + 22;
-    x.font = F(600, 21); LS(x, '3px'); x.fillStyle = At; x.fillText(String(gift.label || 'Подарок').toUpperCase(), tx, yy); LS(x, '0px');
+    x.font = F(600, 24); x.fillStyle = At; x.fillText(String(gift.label || 'Подарок'), tx, yy);
     x.font = F(600, 32); x.fillStyle = th.ink; tl.forEach((s, k) => x.fillText(s, tx, yy + 44 + k*40));
     yy = y0 + pad + head;
     if (dl.length){ x.font = F(400, 25); x.fillStyle = th.mut; dl.forEach((s, k) => x.fillText(s, P + pad, yy + 22 + 26 + k*34)); yy += 22 + dl.length*34; }
@@ -1089,10 +1149,10 @@ function drawCard(){
       if (rec){ x.strokeStyle = At; x.lineWidth = 3; rr(x, P + 1.5, y + 1.5, CW - 3, h - 3, 31); x.stroke(); }
       let yy = y + pad + 34;
       x.font = F(600, 34, 'd'); x.fillStyle = th.ink; x.fillText(v.name, P + pad, yy);
-      if (rec){ x.font = F(700, 22); const bt = 'Чаще выбирают', bw = x.measureText(bt).width + 32; x.fillStyle = At; rr(x, P + CW - pad - bw, yy - 30, bw, 40, 20); x.fill(); x.fillStyle = dark ? '#15110A' : '#FFFFFF'; x.fillText(bt, P + CW - pad - bw + 16, yy - 2); }
+      if (rec){ x.font = F(600, 22); const bt = 'Чаще выбирают', bw = x.measureText(bt).width + 32; x.fillStyle = At; rr(x, P + CW - pad - bw, yy - 30, bw, 40, 20); x.fill(); x.fillStyle = inkOn(dark ? A : '#'+hexRgb(At).map(v => v.toString(16).padStart(2,'0')).join('')); x.fillText(bt, P + CW - pad - bw + 16, yy - 2); }
       yy += 18;
       if (mv.disc > 0){ yy += 34; x.font = F(500, 28); x.fillStyle = th.mut; const s = rub(mv.sub); x.fillText(s, P + pad, yy); const w = x.measureText(s).width; x.strokeStyle = th.mut; x.lineWidth = 2.5; x.beginPath(); x.moveTo(P + pad - 3, yy - 9); x.lineTo(P + pad + w + 3, yy - 9); x.stroke(); yy += 6; }
-      yy += 68; x.font = F(700, 60, 'd'); x.fillStyle = At; x.fillText(rub(rv.total), P + pad, yy);
+      yy += 68; x.font = F(600, 60, 'd'); x.fillStyle = At; x.fillText(rub(rv.total), P + pad, yy);
       yy += 18;
       mv.L.forEach(l => {
         yy += 50; drawIcon(x, l.icon, P + pad + 16, yy - 10, 30, At);
@@ -1165,15 +1225,15 @@ function drawCard(){
   } else {
     const pad = 56, list = (S.priceList ? m.L.map(l => l.name).join(', ') : '') + (gift ? (S.priceList ? '. ' : '') + 'В подарок: ' + gift.title.replace(/^Трек /, 'трек ') : '');
     x.font = F(400, 30); const ll = list ? wrap(x, list, CW - 2*pad, 4) : [];
-    let fs = 132; x.font = F(700, fs, 'd');
-    while (x.measureText(rub(m.total)).width > CW - 2*pad && fs > 48){ fs -= 4; x.font = F(700, fs, 'd'); }
+    let fs = 132; x.font = F(600, fs, 'd');
+    while (x.measureText(rub(m.total)).width > CW - 2*pad && fs > 48){ fs -= 4; x.font = F(600, fs, 'd'); }
     const hasOld = m.disc > 0;
     const h = pad + 30 + (hasOld ? 56 : 0) + 30 + fs*.82 + (ll.length ? 44 + ll.length*42 : 0) + pad;
     x.fillStyle = rgba(A, dark ? .13 : .12); rr(x, P, y, CW, h, 40); x.fill();
     x.textAlign = 'center'; const cx = W/2;
     let yy = y + pad + 26; x.font = F(500, 30); x.fillStyle = th.mut; x.fillText('Стоимость', cx, yy);
     if (hasOld){ yy += 56; x.font = F(500, 36); const s = rub(m.sub); x.fillText(s, cx, yy); const w = x.measureText(s).width; x.strokeStyle = th.mut; x.lineWidth = 3; x.beginPath(); x.moveTo(cx - w/2 - 4, yy - 12); x.lineTo(cx + w/2 + 4, yy - 12); x.stroke(); }
-    yy += 30 + fs*.82; x.font = F(700, fs, 'd'); x.fillStyle = At; x.fillText(rub(m.total), cx, yy);
+    yy += 30 + fs*.82; x.font = F(600, fs, 'd'); x.fillStyle = At; x.fillText(rub(m.total), cx, yy);
     if (ll.length){ yy += 44; x.font = F(400, 30); x.fillStyle = th.mut; ll.forEach((s, k) => x.fillText(s, cx, yy + 22 + k*42)); }
     x.textAlign = 'left';
     y += h;
@@ -1195,8 +1255,8 @@ function drawCard(){
       secs.forEach((sname, si) => {
         if (si){ yy += 30; if (draw){ x.strokeStyle = th.line; x.lineWidth = 2; x.beginPath(); x.moveTo(X0, yy); x.lineTo(X0 + inner, yy); x.stroke(); } yy += 36; }
         if (sname !== 'qr'){
-          x.font = F(600, 22); LS(x, '3px'); x.fillStyle = th.mut;
-          T(sname === 'ext' ? 'ПРОДЛЕНИЕ' : 'КАК ЗАБРОНИРОВАТЬ', X0, yy + 22); LS(x, '0px'); yy += 22;
+          x.font = F(600, 26); x.fillStyle = th.mut;
+          T(sname === 'ext' ? 'Продление' : 'Как забронировать', X0, yy + 24); yy += 24;
         }
         if (sname === 'ext'){
           r.ext.forEach(e => { yy += 50; x.font = F(500, 30); x.fillStyle = th.ink; T(e.name, X0, yy); x.font = F(600, 30); x.textAlign = 'right'; T(rub(e.rate) + ' за час', X0 + inner, yy); x.textAlign = 'left'; });
@@ -1209,8 +1269,8 @@ function drawCard(){
           }
         }
         if (sname === 'book'){
-          if (mode === 'variants' && r.ppMode === 'pct' && r.ppVal){ yy += 54; x.font = F(500, 30); x.fillStyle = th.ink; T('Предоплата', X0, yy); x.font = F(700, 30); x.fillStyle = At; x.textAlign = 'right'; T(r.ppVal + '% от выбранного варианта', X0 + inner, yy); x.textAlign = 'left'; }
-          else if (r.prepay){ yy += 54; x.font = F(500, 30); x.fillStyle = th.ink; T(ppLabel(r), X0, yy); x.font = F(700, 34); x.fillStyle = At; x.textAlign = 'right'; T(rub(r.prepay), X0 + inner, yy); x.textAlign = 'left'; }
+          if (mode === 'variants' && r.ppMode === 'pct' && r.ppVal){ yy += 54; x.font = F(500, 30); x.fillStyle = th.ink; T('Предоплата', X0, yy); x.font = F(600, 30); x.fillStyle = At; x.textAlign = 'right'; T(r.ppVal + '% от выбранного варианта', X0 + inner, yy); x.textAlign = 'left'; }
+          else if (r.prepay){ yy += 54; x.font = F(500, 30); x.fillStyle = th.ink; T(ppLabel(r), X0, yy); x.font = F(600, 34); x.fillStyle = At; x.textAlign = 'right'; T(rub(r.prepay), X0 + inner, yy); x.textAlign = 'left'; }
           if (vd){ yy += 48; x.font = F(400, 27); x.fillStyle = th.mut; T('Цена и дата закреплены до ' + vd, X0, yy); }
           if (note){ x.font = F(400, 27); x.fillStyle = th.ink; wrap(x, note, inner, 4).forEach((s, k) => { yy += k ? 36 : 44; T(s, X0, yy); }); }
           yy += 8;
@@ -1406,9 +1466,10 @@ function applyTheme(){
   if (S.uiTheme === 'auto') root.removeAttribute('data-ui'); else root.setAttribute('data-ui', S.uiTheme);
   const A = S.accent || '#D9A441';
   root.style.setProperty('--a', A);
-  root.style.setProperty('--a-ink', lum(A) > .4 ? '#15110A' : '#FFFFFF');
+  root.style.setProperty('--a-ink', inkOn(A));
   const dark = S.uiTheme === 'dark' || (S.uiTheme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-  root.style.setProperty('--a-txt', dark ? A : (lum(A) > .35 ? shade(A, .42) : A));
+  let at = A, f = 0; if (!dark){ while (contrast(at, '#EEEEF2') < 4.6 && f < .8){ f += .04; at = shade(A, f); } }
+  root.style.setProperty('--a-txt', at);
   const ini = String(S.brand || 'Алексей Ланго').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'АЛ';
   $('hMono').textContent = ini; $('hMono').setAttribute('aria-label', S.brand || 'lango.show');
 }
@@ -1486,7 +1547,7 @@ document.addEventListener('input', e => {
 });
 // calc fields
 $('v-calc').addEventListener('input', e => {
-  const el = e.target;
+  const el = e.target; delete C.example;
   if (el.dataset.c){ C[el.dataset.c] = el.value; update(); return; }
   const row = el.closest('.svc'); if (!row) return;
   const s = svcById(row.dataset.sid); if (!s) return;
@@ -1500,7 +1561,7 @@ $('v-calc').addEventListener('input', e => {
   update();
 });
 $('v-calc').addEventListener('change', e => {
-  const el = e.target;
+  const el = e.target; delete C.example;
   if (el.id === 'cDate'){ C.date = el.value; C.dayManual = ''; update(); return; }
   if (el.dataset.role === 'on' || el.dataset.role === 'hide'){
     const s = svcById(el.closest('.svc').dataset.sid), st = selOf(C, s);
@@ -1513,6 +1574,7 @@ $('v-calc').addEventListener('toggle', e => {
   const id = d.closest('.svc').dataset.sid; d.open ? openCl.add(id) : openCl.delete(id);
 }, true);
 $('v-calc').addEventListener('click', e => {
+  if (e.target.closest('button,input,label')) delete C.example;
   const t = e.target.closest('[data-title],[data-day],[data-disc],[data-role=qtyreset],[data-cname],[data-desc]'); if (!t) return;
   if (t.dataset.title){ C.title = t.dataset.title; }
   else if (t.dataset.day){ const a = dayAuto(C.date); C.dayManual = (a && a.type === t.dataset.day) ? '' : t.dataset.day; }
@@ -1709,8 +1771,10 @@ $('qrDel').addEventListener('click', () => { S.qr = ''; updateSettings(); });
 
 // backup
 $('exportBtn').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify({app:'lango-calc', v:3, settings:S}, null, 2)], {type:'application/json'});
-  offerFile(blob, 'lango-калькулятор-настройки.json', 'setMsg');
+  upsertHist();
+  const d = new Date(), stamp = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  const blob = new Blob([JSON.stringify({app:'lango-calc', v:4, saved:Date.now(), settings:S, history:H}, null, 2)], {type:'application/json'});
+  offerFile(blob, 'lango-копия-' + stamp + '.json', 'setMsg');
 });
 $('importBtn').addEventListener('click', () => $('importFile').click());
 $('importFile').addEventListener('change', e => {
@@ -1718,7 +1782,10 @@ $('importFile').addEventListener('change', e => {
   f.text().then(t => {
     const v = JSON.parse(t); const s = v.settings || v.S;
     if (!s || !Array.isArray(s.services)) throw new Error('bad');
-    S = Object.assign(clone(DEF_S), s); S.services = S.services.map(normService); rebuildAll(); msg('setMsg', 'Настройки загружены.');
+    S = Object.assign(clone(DEF_S), s); S.services = S.services.map(normService);
+    let added = 0;
+    if (Array.isArray(v.history)) v.history.forEach(h => { if (!h || !h.id || !h.C) return; const i = H.findIndex(x => x.id === h.id); if (i < 0){ H.push(h); added++; } else if ((h.upd || 0) > (H[i].upd || 0)) H[i] = h; });
+    persist(); rebuildAll(); msg('setMsg', 'Загружено: настройки и цены' + (Array.isArray(v.history) ? ', расчётов добавлено ' + added : ''));
   }).catch(() => msg('setMsg', 'Не получилось прочитать файл. Это точно копия калькулятора?'));
   e.target.value = '';
 });
