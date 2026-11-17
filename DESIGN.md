@@ -1,6 +1,7 @@
 # DESIGN.md · Калькулятор lango.show
 
 Дизайн-система приложения в формате DESIGN.md (Google Stitch, сборник VoltAgent/awesome-design-md).
+Витрина: [preview.html](https://alekseylango-gif.github.io/calc/preview.html), светлая и тёмная тема рядом, контраст считается вживую.
 Любая правка интерфейса сверяется с этим файлом и с «Нормами дизайна» (unslop, CC BY 4.0, https://github.com/heydamir/unslop).
 
 ## 1. Характер
