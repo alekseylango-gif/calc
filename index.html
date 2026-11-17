@@ -401,6 +401,17 @@ nav.tabs .badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;he
 nav.tabs .badge[hidden]{display:none}
 .svg-crisp,svg{shape-rendering:geometricPrecision}
 .hsum b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* comparison cards: label and multiplier on one line, sum below, centred */
+.cmp div{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:12px;min-height:64px}
+.cmp span{display:flex;gap:6px;align-items:baseline;white-space:nowrap}
+.cmp em{font-style:normal;font-weight:500;color:var(--mut)}
+.cmp b{margin:0}
+/* tier growth switch: icon, name, sum */
+.tseg button{grid-template-columns:auto auto;column-gap:8px;row-gap:2px;min-height:56px;padding:8px}
+.tseg button svg{grid-row:1 / span 2;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.tseg button .tn{justify-self:start}
+.tseg button small{justify-self:start;font-size:12px;color:var(--mut);font-weight:500}
+.tseg button[aria-pressed=true] svg{color:var(--a-txt)}
 </style>
 </head>
 <body data-tab="calc">
@@ -430,6 +441,8 @@ nav.tabs .badge[hidden]{display:none}
     </div></div>
     <div class="row"><div class="grow"><div class="lbl">Гостей</div><div class="sub" id="guestHint"></div></div>
       <div class="stp" data-step="5"><button type="button" data-d="-1" aria-label="Меньше гостей"></button><input data-c="guests" id="cGuests" type="number" inputmode="numeric" min="0"><button type="button" data-d="1" aria-label="Больше гостей"></button></div></div>
+    <div class="row" id="tierRow" style="display:block" hidden><div class="lbl">Рост ставки по гостям</div><div class="sub" id="tierHint" style="margin-bottom:8px"></div>
+      <div class="seg tseg" id="tierSeg" role="group" aria-label="Рост ставки по гостям"></div></div>
     <div class="row"><div class="grow"><div class="lbl">Длительность, ч</div><div class="sub">Часы услуг подставятся сами</div></div>
       <div class="stp" data-step="0.5"><button type="button" data-d="-1" aria-label="Меньше часов"></button><input data-c="hours" id="cHours" type="number" inputmode="decimal" min="0" step="0.5"><button type="button" data-d="1" aria-label="Больше часов"></button></div></div>
   </div>
@@ -563,16 +576,9 @@ nav.tabs .badge[hidden]{display:none}
   <div class="group" id="giftEditor"></div>
   <div class="foot">Подарок подбирается по названию мероприятия: «Свадьба», «Юбилей», «Корпоратив». В расчёте его можно выключить или выбрать другой.</div>
 
-  <div class="gt">Правила заказа</div>
-  <div class="group">
-    <div class="row"><div class="grow"><div class="lbl">Минимум часов</div><div class="sub">Для почасовых услуг. 0: без минимума</div></div>
-      <div class="stp" data-step="0.5"><button type="button" data-d="-1" aria-label="Меньше часов"></button><input data-s="minHours" data-t="num" type="number" inputmode="decimal" min="0"><button type="button" data-d="1" aria-label="Больше часов"></button></div></div>
-  </div>
-  <div class="foot">Минимум 3 часа поставлен ориентиром. Если клиент берёт меньше, в смете будет 3 ч.</div>
-
   <div class="gt">Ставка за час по количеству гостей</div>
   <div class="group" id="tiers"></div>
-  <div class="foot">Действует для услуг с «Ценой по гостям» (по умолчанию ведущий). При плавном росте 36 гостей стоят почти как 35, а не на 2 000 ₽ в час дороже. Пороги поставлены ориентиром</div>
+  <div class="foot">Два режима переключаются прямо в расчёте. Полный: цена меняется скачком на пороге. Мягкий: растёт по 500 ₽ между порогами, 36 гостей стоят как 35. Пороги поставлены ориентиром</div>
 
   <div class="gt">Дни и праздники</div>
   <div class="group">
@@ -686,9 +692,9 @@ const ACCENTS = ['#D9A441','#E8C27A','#FF6B4A','#E5487A','#8B7CFF','#3FB68B','#4
 const EVENT_TYPES = ['Свадьба','День рождения','Юбилей','Корпоратив','Новый год','Выпускной','Детский праздник'];
 
 const DEF_SERVICES = [
-  {id:'host',  name:'Ведущий', icon:'mic', unit:'hour', price:9000, tiers:true, dayK:true, def:true, ext:true, extPrice:7000,
+  {id:'host',  name:'Ведущий', icon:'mic', unit:'hour', price:9000, minH:2, tiers:true, dayK:true, def:true, ext:true, extPrice:7000,
    cnames:[], descs:['Сценарий, программа, интерактивы','Сценарий под вас, игры и поздравления гостей']},
-  {id:'dj',    name:'DJ', icon:'vinyl', unit:'hour', price:4000, dayK:true, def:true, ext:true, extPrice:3000,
+  {id:'dj',    name:'DJ', icon:'vinyl', unit:'hour', price:4000, minH:3, dayK:true, def:true, ext:true, extPrice:3000,
    cnames:[], descs:['Музыка весь вечер, плейлист под гостей','Танцевальные блоки и музыка к каждому выходу']},
   {id:'sound', name:'Звук и аппаратура', icon:'speaker', unit:'piece', unitName:'компл.', price:5000, guess:true,
    cnames:[], descs:['Акустика, радиомикрофоны, пульт','Комплект на зал до 50 гостей','Комплект на зал до 100 гостей']},
@@ -740,7 +746,7 @@ function newSel(s){ return {on:!!s.def, qty:'', price:'', cname:null, desc:null,
 function newCalc(){
   const sel = {}; S.services.forEach(s => sel[s.id] = newSel(s));
   return {id:'c' + Date.now().toString(36) + Math.random().toString(36).slice(2,5), status:'draft', created:Date.now(), sentAt:null,
-          title:'', client:'', phone:'', venue:'', notes:'', paid:'', date:'', dayManual:'', guests:30, hours:4, sel, discType:'pct', disc:'', expenses:'', note:null, ppMode:null, ppVal:null, gift:null, vars:null};
+          title:'', client:'', phone:'', venue:'', notes:'', paid:'', date:'', dayManual:'', guests:30, hours:4, sel, discType:'pct', disc:'', expenses:'', note:null, ppMode:null, ppVal:null, gift:null, vars:null, tierMode:null};
 }
 
 /* ---------------- state ---------------- */
@@ -762,6 +768,7 @@ try {
   }
   if (!Array.isArray(S.services) || !S.services.length) S.services = clone(DEF_SERVICES);
   S.services = S.services.map(normService);
+  S.services.forEach(s => { if (s.minH === undefined){ s.minH = s.id === 'host' ? 2 : s.id === 'dj' ? 3 : 0; } });
   if (!Array.isArray(S.tiers)) S.tiers = clone(DEF_S.tiers);
   if (!Array.isArray(S.gifts)) S.gifts = clone(DEF_S.gifts);
   if (S.bookNote === 'Предоплату можно внести сразу, и дата закреплена за вами.') S.bookNote = DEF_S.bookNote;
@@ -824,10 +831,12 @@ function dayAuto(ds){
 }
 const dayFactor = t => t === 'weekend' ? (num(S.kWeekend) || 1) : t === 'holiday' ? (num(S.kHoliday) || 1) : 1;
 const kfmt = k => '×' + (Math.round(k*100)/100).toLocaleString('ru-RU');
-function tierRate(g){
+function tierMode(c){ return (c && c.tierMode) || (S.tierSmooth ? 'smooth' : 'step'); }
+function tierRate(g, smooth){
+  if (smooth === undefined) smooth = tierMode(C) === 'smooth';
   const t = S.tiers.filter(x => num(x.upTo) > 0).sort((a,b) => num(a.upTo) - num(b.upTo));
   const over = num(S.tierOver) || (t.length ? num(t[t.length-1].price) : 0);
-  if (!S.tierSmooth){ for (const x of t) if (g <= num(x.upTo)) return num(x.price); return over; }
+  if (!smooth){ for (const x of t) if (g <= num(x.upTo)) return num(x.price); return over; }
   // smooth: price grows evenly between threshold points, rounded to 500
   const pts = t.map(x => [num(x.upTo), num(x.price)]);
   const lastUp = pts.length ? pts[pts.length-1][0] : 0;
@@ -870,12 +879,12 @@ function calc(c){
   const items = [];
   for (const s of S.services){
     const st = selOf(c, s); if (!st.on) continue;
-    const autoRate = s.tiers ? tierRate(g) : num(s.price);
+    const autoRate = s.tiers ? tierRate(g, tierMode(c) === 'smooth') : num(s.price);
     const baseRate = num(st.price) || autoRate;
     let qty = 1;
     if (s.unit === 'hour' || s.unit === 'eventHour') qty = (st.qty === '' || st.qty == null) ? hrs : num(st.qty);
     let minApplied = false;
-    if (s.unit === 'hour' && qty > 0 && num(S.minHours) && qty < num(S.minHours)){ qty = num(S.minHours); minApplied = true; }
+    if (s.unit === 'hour' && qty > 0 && num(s.minH) && qty < num(s.minH)){ qty = num(s.minH); minApplied = true; }
     else if (s.unit === 'piece') qty = (st.qty === '' || st.qty == null) ? 1 : Math.floor(num(st.qty));
     if (!(qty > 0) || !(baseRate > 0)) continue;
     const kk = s.dayK ? k : 1;
@@ -996,6 +1005,17 @@ function refreshCalc(r){
     if (document.activeElement !== $('varName')) $('varName').value = C.vars.list[C.vars.active].name;
     $('varRec').checked = C.vars.rec === C.vars.active;
   }
+  const tierOn = S.services.some(s => s.tiers && selOf(C, s).on && !num(selOf(C, s).price));
+  $('tierRow').hidden = !tierOn;
+  if (tierOn){
+    const ts = calc(Object.assign({}, C, {tierMode:'smooth'})).total, tp = calc(Object.assign({}, C, {tierMode:'step'})).total, cur = tierMode(C), d = tp - ts;
+    const svgS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18c6 0 10-3 18-9"/><path d="M21 9h-4M21 9v4"/></svg>';
+    const svgP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19h5v-5h5V9h5V4h3"/></svg>';
+    $('tierSeg').innerHTML =
+      '<button type="button" data-tier-mode="smooth" aria-pressed="'+(cur === 'smooth')+'">'+svgS+'<span class="tn">Мягкий</span><small>'+rub(ts)+'</small></button>' +
+      '<button type="button" data-tier-mode="step" aria-pressed="'+(cur === 'step')+'">'+svgP+'<span class="tn">Полный</span><small>'+rub(tp)+(d > 0 ? ' · +' + nf(d) + '\u00A0₽' : '')+'</small></button>';
+    $('tierHint').textContent = d > 0 ? 'Разница для этого расчёта ' + rub(d) : 'Для этого количества гостей цена одинаковая';
+  }
   $('guestHint').textContent = S.services.some(s => s.tiers) ? 'Ставка ведущего: ' + rub(tierRate(r.g)) + '/ч' : '';
   document.querySelectorAll('#discSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.disc === C.discType)));
   $('discUnit').textContent = C.discType === 'rub' ? '₽' : '%';
@@ -1009,7 +1029,7 @@ function refreshCalc(r){
     const autoRate = s.tiers ? tierRate(r.g) : num(s.price);
     const unitTxt = s.unit === 'hour' ? '/ч' : s.unit === 'eventHour' ? ' за час мероприятия' : s.unit === 'piece' ? '/' + (s.unitName || 'шт') : '';
     let info = rub(num(st.price) || autoRate) + unitTxt + (s.tiers && !num(st.price) ? ' · по гостям' : '') + (num(st.price) ? ' · своя цена' : '');
-    if (st.on && it) info = (s.unit === 'fixed' ? '' : hfmt(it.qty) + ' ' + unitShort(s) + ' × ' + rub(it.rate) + ' = ') + rub(it.sum) + (it.k !== 1 ? ' · ' + DAY_NAMES[r.dayType].toLowerCase() : '') + (it.minApplied ? ' · минимум ' + hfmt(num(S.minHours)) + ' ч' : '');
+    if (st.on && it) info = (s.unit === 'fixed' ? '' : hfmt(it.qty) + ' ' + unitShort(s) + ' × ' + rub(it.rate) + ' = ') + rub(it.sum) + (it.k !== 1 ? ' · ' + DAY_NAMES[r.dayType].toLowerCase() : '') + (it.minApplied ? ' · минимум ' + hfmt(num(it.s.minH)) + ' ч' : '');
     el.querySelector('[data-role=info]').textContent = info;
     const q = el.querySelector('[data-role=qty]');
     if (q && document.activeElement !== q) q.value = (st.qty === '' || st.qty == null) ? (s.unit === 'piece' ? 1 : hfmt(r.hrs).replace(',', '.')) : st.qty;
@@ -1063,7 +1083,7 @@ function refreshCalc(r){
   const cmp = $('cmp'); cmp.innerHTML = '';
   ['weekday','weekend','holiday'].forEach(t => {
     const d = document.createElement('div'); if (t === r.dayType) d.className = 'on';
-    d.innerHTML = '<span>'+DAY_NAMES[t]+'<br>'+kfmt(dayFactor(t))+'</span><b>'+rub(calc(Object.assign({}, C, {dayManual:t})).total)+'</b>';
+    d.innerHTML = '<span>'+DAY_NAMES[t]+'</span><b>'+rub(calc(Object.assign({}, C, {dayManual:t})).total)+'</b>';
     cmp.appendChild(d);
   });
 }
@@ -1456,6 +1476,7 @@ function buildSvcEditor(){
         '<div class="field"><label>Описания для клиента: варианты, по одному в строке</label><textarea class="in" rows="3" data-f="descs" placeholder="Первое подставится само, остальные выбираются в расчёте">'+esc(s.descs.join('\n'))+'</textarea></div>' +
         '<div class="field"><label>Как считать</label><select class="in" data-f="unit" style="width:100%">' + Object.keys(UNITS).map(u => '<option value="'+u+'"'+(u === s.unit ? ' selected' : '')+'>'+UNITS[u]+'</option>').join('') + '</select></div>' +
         '<div class="field"><label>'+(s.tiers ? 'Цена, если не по гостям, ₽' : 'Цена, ₽')+'</label><input class="in" type="number" inputmode="numeric" step="500" min="0" data-f="price" value="'+esc(s.price)+'"></div>' +
+        (s.unit === 'hour' ? '<div class="field"><label>Минимальный заказ, ч (0: без минимума)</label><input class="in" type="text" inputmode="decimal" data-f="minH" value="'+esc(String(s.minH || 0).replace('.', ','))+'"></div>' : '') +
         '<div class="field"><label>Себестоимость за '+(s.unit === 'piece' ? esc(s.unitName || 'шт') : s.unit === 'fixed' ? 'услугу' : 'час')+', ₽ (видите только вы)</label><input class="in" type="number" inputmode="numeric" step="500" min="0" data-f="cost" value="'+esc(s.cost || '')+'" placeholder="Например, оплата партнёру или аренда"></div>' +
         (s.unit === 'piece' ? '<div class="field"><label>Единица</label><input class="in" data-f="unitName" value="'+esc(s.unitName || '')+'" placeholder="шт"></div>' : '') +
         (hourly ? '<div class="row"><div class="grow"><div class="lbl">Цена по количеству гостей</div><div class="sub">Берётся из таблицы ниже</div></div><label class="sw"><input type="checkbox" data-f="tiers"'+(s.tiers ? ' checked' : '')+' aria-label="Цена по гостям"><span></span></label></div>' : '') +
@@ -1484,10 +1505,11 @@ function buildGiftEditor(){
 }
 function svcSummary(s){
   let t;
-  if (s.tiers && (s.unit === 'hour' || s.unit === 'eventHour')) t = 'по гостям: ' + rub(tierRate(0)) + ' … ' + rub(num(S.tierOver)) + '/ч';
+  if (s.tiers && (s.unit === 'hour' || s.unit === 'eventHour')) t = 'по гостям: ' + rub(tierRate(0, true)) + ' … ' + rub(num(S.tierOver)) + '/ч';
   else t = rub(num(s.price)) + ' ' + (s.unit === 'piece' ? 'за ' + (s.unitName || 'шт') : UNITS[s.unit]);
   if (s.cnames.length) t += ' · клиент видит «' + s.cnames[0] + '»';
   if (s.hideInto && svcById(s.hideInto)) t += ' · в цене: ' + svcById(s.hideInto).name;
+  if (s.unit === 'hour' && num(s.minH)) t += ' · от ' + hfmt(num(s.minH)) + ' ч';
   return t;
 }
 function buildTiers(){
@@ -1496,9 +1518,9 @@ function buildTiers(){
     '<div class="tier"><span class="t">до</span><div class="money" style="width:92px"><input type="number" inputmode="numeric" min="1" data-tier="'+i+'" data-f="upTo" value="'+esc(x.upTo)+'" style="width:44px"></div><span class="t">гостей</span>' +
     '<div class="grow"></div><div class="money"><input type="number" inputmode="numeric" step="500" min="0" data-tier="'+i+'" data-f="price" value="'+esc(x.price)+'" style="width:76px"><span>₽</span></div>' +
     '<button type="button" class="x" data-tierdel="'+i+'" aria-label="Удалить порог">×</button></div>').join('') +
-    (S.tierSmooth ? '<div class="tier"><span class="t">к</span><div class="money" style="width:92px"><input type="number" inputmode="numeric" min="1" id="tierOverAt" value="'+esc(S.tierOverAt)+'" style="width:44px"></div><span class="t">гостям</span>' : '<div class="tier"><span class="t">больше</span>') +
+    '<div class="tier"><span class="t">свыше, мягкий к</span><div class="money" style="width:80px"><input type="number" inputmode="numeric" min="1" id="tierOverAt" value="'+esc(S.tierOverAt)+'" style="width:36px"></div><span class="t">гост.</span>' +
     '<div class="grow"></div><div class="money"><input type="number" inputmode="numeric" step="500" min="0" id="tierOver" value="'+esc(S.tierOver)+'" style="width:76px"><span>₽</span></div><span style="width:44px"></span></div>' +
-    '<div class="row"><div class="grow"><div class="lbl">Плавный рост между порогами</div><div class="sub">'+(S.tierSmooth ? 'Цена растёт по шагам 500 ₽, без скачков' : 'Цена меняется скачком на пороге')+'</div></div><label class="sw"><input type="checkbox" id="tierSmooth"'+(S.tierSmooth ? ' checked' : '')+' aria-label="Плавный рост"><span></span></label></div>' +
+    '<div class="row"><div class="grow"><div class="lbl">Мягкий рост в новом расчёте</div><div class="sub">'+(S.tierSmooth ? 'Новый расчёт откроется с мягким ростом' : 'Новый расчёт откроется с полным ростом')+'</div></div><label class="sw"><input type="checkbox" id="tierSmooth"'+(S.tierSmooth ? ' checked' : '')+' aria-label="Плавный рост"><span></span></label></div>' +
     '<div class="sact" style="padding-top:6px"><button type="button" class="btn" id="tierAdd">+ Порог</button></div>';
   if (typeof fmtInputs === "function") setTimeout(fmtInputs, 0);
 }
@@ -1663,6 +1685,7 @@ $('giftOn').addEventListener('change', e => { C.gift = e.target.checked ? (giftA
 $('giftChips').addEventListener('click', e => { const b = e.target.closest('[data-gift]'); if (!b) return; const ga = giftAuto(); C.gift = ga && ga.id === b.dataset.gift ? null : b.dataset.gift; update(); });
 function startNew(){ upsertHist(); C = newCalc(); update(); setTab('calc'); }
 $('newCalc').addEventListener('click', startNew);
+$('tierSeg').addEventListener('click', e => { const b = e.target.closest('[data-tier-mode]'); if (!b) return; C.tierMode = b.dataset.tierMode; update(); });
 $('cStatus').addEventListener('change', e => { setStatus(C, e.target.value); update(); });
 $('varOn').addEventListener('change', e => {
   if (e.target.checked){
@@ -1777,6 +1800,7 @@ $('v-set').addEventListener('input', e => {
     else if (f === 'price'){ s.price = num(el.value); s.guess = false; const tg = box.querySelector('.tag'); if (tg) tg.remove(); }
     else if (f === 'extPrice'){ s.extPrice = num(el.value); }
     else if (f === 'cost'){ s.cost = num(el.value); }
+    else if (f === 'minH'){ s.minH = num(el.value); }
     else if (f === 'unit'){ s.unit = el.value; if (s.unit !== 'hour' && s.unit !== 'eventHour') s.tiers = false; if (s.unit !== 'hour') s.ext = false; rebuild = true; }
     else if (f === 'cnames' || f === 'descs'){ s[f] = lines(el.value); buildSvcList(); }
     else if (f === 'hideInto'){ s.hideInto = el.value; buildSvcList(); }
