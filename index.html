@@ -1216,25 +1216,43 @@ function drawCard(){
   x.textBaseline = 'alphabetic'; x.textAlign = 'left';
 
   const hid = heroIdFor(mode), him = hid ? heroImg(hid) : null;
-  const HH = 380, HW = him ? Math.round(HH * him.width / him.height) : 0, TW = him ? CW - HW - 24 : CW;
   let y = P + 26;
   x.font = F(600, 28, 'd'); x.fillStyle = At;
   x.fillText(String(S.brand || ''), P, y);
   if (S.tagline){ y += 44; x.font = F(500, 27); x.fillStyle = th.mut; x.fillText(S.tagline, P, y); }
-  y += 92;
-  x.font = F(600, 62, 'd'); x.fillStyle = th.ink;
-  wrap(x, C.title || 'Мероприятие', TW, 3).forEach((l, i) => { if (i) y += 76; x.fillText(l, P, y); });
-  if (C.client){ y += 56; x.font = F(500, 34); x.fillStyle = th.ink; wrap(x, C.client, TW, 2).forEach((l,i) => { if (i) y += 44; x.fillText(l, P, y); }); }
   const meta = metaParts(r);
-  if (meta.length){ y += 52; x.font = F(500, 29); x.fillStyle = th.mut;
-    const ml = []; let cur = '';
-    meta.forEach(p => { const t = cur ? cur + '  ·  ' + p : p; if (!cur || x.measureText(t).width <= TW) cur = t; else { ml.push(cur); cur = p; } });
-    if (cur) ml.push(cur);
-    ml.slice(0, 3).forEach((l,i) => { if (i) y += 40; x.fillText(l, P, y); }); }
-  y += 56;
+  const metaLines = (w) => { x.font = F(500, 29); const ml = []; let cur = '';
+    meta.forEach(p => { const t = cur ? cur + '  ·  ' + p : p; if (!cur || x.measureText(t).width <= w) cur = t; else { ml.push(cur); cur = p; } });
+    if (cur) ml.push(cur); return ml.slice(0, 3); };
   if (him){
-    y = Math.max(y, P - 20 + HH);
-    x.drawImage(him, W - P - HW, y - HH, HW, HH);
+    /* hero plate: the figure stands inside the plate, head and hands come out above its top edge */
+    const HH = 400, HW = Math.round(HH * him.width / him.height), pop = 116, pad = 44, R = 36;
+    const TW = CW - pad - HW - 8;
+    let tf = 56, tl; for (; ; tf -= 4){ x.font = F(600, tf, 'd'); tl = wrap(x, C.title || 'Мероприятие', TW, 9); if (tl.length <= 3 || tf <= 40) break; }
+    tl = wrap(x, C.title || 'Мероприятие', TW, 3); const tlh = Math.round(tf * 1.18);
+    x.font = F(500, 32); const cl = C.client ? wrap(x, C.client, TW, 2) : [];
+    const ml = meta.length ? metaLines(TW) : [];
+    const th0 = 44 + (tl.length - 1)*tlh + (cl.length ? 48 + (cl.length - 1)*42 : 0) + (ml.length ? 48 + (ml.length - 1)*40 : 0);
+    const ph = Math.max(HH - pop, th0 + 2*pad + 8);
+    const py = Math.max(y + 40, P - 10 + HH - ph);
+    const pb = py + ph;
+    x.fillStyle = rgba(A, dark ? .14 : .13); rr(x, P, py, CW, ph, R); x.fill();
+    let yy = py + (ph - th0)/2 + 44;
+    x.font = F(600, tf, 'd'); x.fillStyle = th.ink; tl.forEach((l, i) => { if (i) yy += tlh; x.fillText(l, P + pad, yy); });
+    if (cl.length){ yy += 48; x.font = F(500, 32); x.fillStyle = th.ink; cl.forEach((l, i) => { if (i) yy += 42; x.fillText(l, P + pad, yy); }); }
+    if (ml.length){ yy += 48; x.font = F(500, 29); x.fillStyle = th.mut; ml.forEach((l, i) => { if (i) yy += 40; x.fillText(l, P + pad, yy); }); }
+    x.save();
+    x.beginPath(); x.moveTo(P, 0); x.lineTo(P + CW, 0); x.lineTo(P + CW, pb - R); x.arcTo(P + CW, pb, P + CW - R, pb, R); x.lineTo(P + R, pb); x.arcTo(P, pb, P, pb - R, R); x.closePath(); x.clip();
+    x.drawImage(him, P + CW - HW - 8, pb - HH, HW, HH);
+    x.restore();
+    y = pb + 28;
+  } else {
+    y += 92;
+    x.font = F(600, 62, 'd'); x.fillStyle = th.ink;
+    wrap(x, C.title || 'Мероприятие', CW, 3).forEach((l, i) => { if (i) y += 76; x.fillText(l, P, y); });
+    if (C.client){ y += 56; x.font = F(500, 34); x.fillStyle = th.ink; wrap(x, C.client, CW, 2).forEach((l,i) => { if (i) y += 44; x.fillText(l, P, y); }); }
+    if (meta.length){ y += 52; x.font = F(500, 29); x.fillStyle = th.mut; metaLines(CW).forEach((l,i) => { if (i) y += 40; x.fillText(l, P, y); }); }
+    y += 56;
   }
 
   function totalBlock(y0, old){
