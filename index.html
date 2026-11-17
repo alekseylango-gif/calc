@@ -566,7 +566,6 @@ nav.tabs .badge[hidden]{display:none}
   <div class="gt">Герой на карточке</div>
   <div class="group">
     <div class="row"><span class="lbl grow">Показывать героя</span><label class="sw"><input type="checkbox" data-s="heroOn" aria-label="Показывать героя"><span></span></label></div>
-    <div class="row"><div class="grow"><div class="lbl">Без героя на корпоративе и Новом годе</div><div class="sub">Когда в расчёте выбрано «Авто»</div></div><label class="sw"><input type="checkbox" data-s="heroCorpOff" aria-label="Без героя на корпоративе"><span></span></label></div>
   </div>
   <div class="gt">Кто стоит в режиме «Авто»</div>
   <div class="group" id="heroAutoRows"></div>
@@ -763,7 +762,7 @@ const DEF_S = {
   qr:'', qrShow:true, qrCaption:'Видео и фото с моих мероприятий', qrLink:'',
   roundStep:1000, roundMode:'down',
   giftsOn:true, minProfit:0,
-  heroOn:true, heroCorpOff:true, heroAuto:{icons:'cool', price:'ok', variants:'smile', list:''}, heroesCustom:[],
+  heroOn:true, heroAuto:{icons:'cool', price:'ok', variants:'smile', list:'point'}, heroesCustom:[], heroV:2,
   gifts:[
     {id:'love', label:'Подарок молодожёнам', title:'Трек «История вашей любви»', events:'Свадьба',
      desc:'Вместе с вами и гостями пишем слова о вашей истории, из них делается трек. Я презентую его в танцевальной части вечера.',
@@ -815,6 +814,7 @@ try {
   if (!Array.isArray(S.tiers)) S.tiers = clone(DEF_S.tiers);
   if (!Array.isArray(S.gifts)) S.gifts = clone(DEF_S.gifts);
   S.heroAuto = Object.assign(clone(DEF_S.heroAuto), S.heroAuto || {}); if (!Array.isArray(S.heroesCustom)) S.heroesCustom = [];
+  if (v && v.S && !(v.S.heroV >= 2)){ if (!S.heroAuto.list) S.heroAuto.list = 'point'; S.heroV = 2; } delete S.heroCorpOff;
   if (S.bookNote === 'Предоплату можно внести сразу, и дата закреплена за вами.') S.bookNote = DEF_S.bookNote;
   if (v && v.S && v.S.rateRound === 500 && v.S.tierSmooth === undefined) S.rateRound = 'smart';
   if (!String(S.contacts || '').trim()) S.contacts = DEF_S.contacts;
@@ -1191,7 +1191,6 @@ function isCorp(){ return /корпоратив|новый год/i.test(String(
 function heroIdFor(mode){
   if (!S.heroOn || C.hero === '') return '';
   if (C.hero) return heroById(C.hero) ? C.hero : '';
-  if (S.heroCorpOff && isCorp()) return '';
   const id = (S.heroAuto || {})[mode] || ''; return heroById(id) ? id : '';
 }
 const heroImgs = {};
@@ -1552,7 +1551,7 @@ function renderHeroPick(){
   const m = curMode(), id = heroIdFor(m), h = heroById(id);
   let hint;
   if (!S.heroOn) hint = 'Герой выключен в настройках';
-  else if (C.hero == null) hint = h ? 'Авто: ' + h.name.toLowerCase() : (S.heroCorpOff && isCorp() ? 'Авто: без героя для корпоратива' : 'Авто: для этого вида без героя');
+  else if (C.hero == null) hint = h ? 'Авто: ' + h.name.toLowerCase() : 'Авто: для этого вида без героя';
   else hint = h ? h.name : 'Без героя';
   $('heroHint').textContent = hint;
 }
