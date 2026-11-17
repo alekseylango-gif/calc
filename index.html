@@ -1215,17 +1215,18 @@ function drawCard(){
   x.textBaseline = 'alphabetic'; x.textAlign = 'left';
 
   const hid = heroIdFor(mode), him = hid ? heroImg(hid) : null;
+  const IN = 40, LX = P + IN;   /* every text column on the card starts here */
   let y = P + 26;
   x.font = F(600, 28, 'd'); x.fillStyle = At;
-  x.fillText(String(S.brand || ''), P, y);
-  if (S.tagline){ y += 44; x.font = F(500, 27); x.fillStyle = th.mut; x.fillText(S.tagline, P, y); }
+  x.fillText(String(S.brand || ''), LX, y);
+  if (S.tagline){ y += 44; x.font = F(500, 27); x.fillStyle = th.mut; x.fillText(S.tagline, LX, y); }
   const meta = metaParts(r);
   const metaLines = (w) => { x.font = F(500, 29); const ml = []; let cur = '';
     meta.forEach(p => { const t = cur ? cur + '  ·  ' + p : p; if (!cur || x.measureText(t).width <= w) cur = t; else { ml.push(cur); cur = p; } });
     if (cur) ml.push(cur); return ml.slice(0, 3); };
   if (him){
     /* hero plate: the figure stands inside the plate, head and hands come out above its top edge */
-    const HH = 400, HW = Math.round(HH * him.width / him.height), pop = 116, pad = 44, R = 36;
+    const HH = 400, HW = Math.round(HH * him.width / him.height), pop = 116, pad = IN, R = 36;
     const TW = CW - pad - HW - 8;
     let tf = 56, tl; for (; ; tf -= 4){ x.font = F(600, tf, 'd'); tl = wrap(x, C.title || 'Мероприятие', TW, 9); if (tl.length <= 3 || tf <= 40) break; }
     tl = wrap(x, C.title || 'Мероприятие', TW, 3); const tlh = Math.round(tf * 1.18);
@@ -1248,14 +1249,14 @@ function drawCard(){
   } else {
     y += 92;
     x.font = F(600, 62, 'd'); x.fillStyle = th.ink;
-    wrap(x, C.title || 'Мероприятие', CW, 3).forEach((l, i) => { if (i) y += 76; x.fillText(l, P, y); });
-    if (C.client){ y += 56; x.font = F(500, 34); x.fillStyle = th.ink; wrap(x, C.client, CW, 2).forEach((l,i) => { if (i) y += 44; x.fillText(l, P, y); }); }
-    if (meta.length){ y += 52; x.font = F(500, 29); x.fillStyle = th.mut; metaLines(CW).forEach((l,i) => { if (i) y += 40; x.fillText(l, P, y); }); }
+    wrap(x, C.title || 'Мероприятие', CW - IN, 3).forEach((l, i) => { if (i) y += 76; x.fillText(l, LX, y); });
+    if (C.client){ y += 56; x.font = F(500, 34); x.fillStyle = th.ink; wrap(x, C.client, CW - IN, 2).forEach((l,i) => { if (i) y += 44; x.fillText(l, LX, y); }); }
+    if (meta.length){ y += 52; x.font = F(500, 29); x.fillStyle = th.mut; metaLines(CW - IN).forEach((l,i) => { if (i) y += 40; x.fillText(l, LX, y); }); }
     y += 56;
   }
 
   function totalBlock(y0, old){
-    const pad = 44, hasOld = old > 0;
+    const pad = IN, hasOld = old > 0;
     const h = pad + 28 + (hasOld ? 50 : 0) + 22 + 84 + pad;
     x.fillStyle = rgba(A, dark ? .13 : .12); rr(x, P, y0, CW, h, 36); x.fill();
     let yy = y0 + pad + 24;
@@ -1270,7 +1271,7 @@ function drawCard(){
 
   const gift = giftOf();
   function giftBlock(y0){
-    const pad = 34, inner = CW - 2*pad, tx = P + pad + 84 + 26, tw = CW - pad - (tx - P);
+    const pad = IN, inner = CW - 2*pad, tx = P + pad + 84 + 26, tw = CW - pad - (tx - P);
     x.font = F(600, 32); const tl = wrap(x, gift.title, tw, 2);
     x.font = F(400, 25); const dl = gift.desc ? wrap(x, gift.desc, inner, 4) : [];
     x.font = F(400, 23); const nl = gift.note ? wrap(x, gift.note, inner, 2) : [];
@@ -1294,7 +1295,7 @@ function drawCard(){
   }
 
   if (mode === 'variants'){
-    const pad = 36;
+    const pad = IN;
     C.vars.list.forEach((v, vi) => {
       const rv = calcV(vi), mv = clientModel(rv), rec = C.vars.rec === vi;
       x.font = F(500, 28); const rowsN = mv.L.length;
@@ -1318,9 +1319,9 @@ function drawCard(){
     y += 6;
     if (gift){ y = giftBlock(y) + 6; }
   } else if (!m.L.length){
-    x.font = F(500, 32); x.fillStyle = th.mut; x.fillText('Услуги не выбраны', P, y + 40); y += 80;
+    x.font = F(500, 32); x.fillStyle = th.mut; x.fillText('Услуги не выбраны', LX, y + 40); y += 80;
   } else if (mode === 'icons'){
-    const gap = 20, cols = m.L.length === 1 ? 1 : 2, tw = (CW - gap*(cols-1)) / cols, pad = 30;
+    const gap = 20, cols = m.L.length === 1 ? 1 : 2, tw = (CW - gap*(cols-1)) / cols, pad = IN;
     const tiles = m.L.map((l, i) => {
       const full = cols === 2 && i === m.L.length - 1 && m.L.length % 2 === 1;
       const w = full ? CW : tw, inner = w - 2*pad;
@@ -1350,28 +1351,28 @@ function drawCard(){
     y += 22;
     y = totalBlock(y, m.disc > 0 ? m.sub : 0);
   } else if (mode === 'list'){
-    const tx = P + 96, nameW = CW - 96 - 240;
+    const tx = LX + 96, nameW = CW - 2*IN - 96 - 240;
     m.L.forEach((l, i) => {
       x.font = F(600, 33); const nl = wrap(x, l.name, nameW, 2);
       x.font = F(400, 25); const dl = l.desc ? wrap(x, l.desc, nameW, 2) : [];
       const tb = nl.length*42 + dl.length*34 + (l.detail ? 38 : 0);
       const rh = Math.max(76, tb) + 46;
       const cy = y + rh/2;
-      x.fillStyle = rgba(A, dark ? .16 : .15); x.beginPath(); x.arc(P + 38, cy, 38, 0, Math.PI*2); x.fill();
-      drawIcon(x, l.icon, P + 38, cy, 40, At);
+      x.fillStyle = rgba(A, dark ? .16 : .15); x.beginPath(); x.arc(LX + 38, cy, 38, 0, Math.PI*2); x.fill();
+      drawIcon(x, l.icon, LX + 38, cy, 40, At);
       let yy = cy - tb/2 + 31;
       x.font = F(600, 33); x.fillStyle = th.ink; nl.forEach((s, k) => x.fillText(s, tx, yy + k*42));
       yy += (nl.length - 1)*42;
       if (dl.length){ x.font = F(400, 25); x.fillStyle = th.mut; dl.forEach((s, k) => x.fillText(s, tx, yy + 36 + k*34)); yy += dl.length*34; }
       if (l.detail){ x.font = F(500, 25); x.fillStyle = th.mut; x.fillText(l.detail, tx, yy + 38); }
-      x.font = F(600, 34); x.fillStyle = th.ink; x.textAlign = 'right'; x.fillText(rub(l.sum), P + CW, cy + 12); x.textAlign = 'left';
+      x.font = F(600, 34); x.fillStyle = th.ink; x.textAlign = 'right'; x.fillText(rub(l.sum), P + CW - IN, cy + 12); x.textAlign = 'left';
       y += rh;
-      if (i < m.L.length - 1){ x.strokeStyle = th.line; x.lineWidth = 2; x.beginPath(); x.moveTo(tx, y); x.lineTo(P + CW, y); x.stroke(); }
+      if (i < m.L.length - 1){ x.strokeStyle = th.line; x.lineWidth = 2; x.beginPath(); x.moveTo(tx, y); x.lineTo(P + CW - IN, y); x.stroke(); }
     });
     if (m.disc > 0){
-      y += 10; x.strokeStyle = th.line; x.lineWidth = 2; x.beginPath(); x.moveTo(P, y); x.lineTo(P + CW, y); x.stroke();
-      y += 56; x.font = F(500, 30); x.fillStyle = th.mut; x.fillText('Сумма', P, y); x.textAlign = 'right'; x.fillText(rub(m.sub), P + CW, y); x.textAlign = 'left';
-      y += 50; x.fillStyle = th.mut; x.fillText('Скидка', P, y); x.fillStyle = At; x.textAlign = 'right'; x.fillText(rub(m.disc), P + CW, y); x.textAlign = 'left';
+      y += 10; x.strokeStyle = th.line; x.lineWidth = 2; x.beginPath(); x.moveTo(LX, y); x.lineTo(P + CW - IN, y); x.stroke();
+      y += 56; x.font = F(500, 30); x.fillStyle = th.mut; x.fillText('Сумма', LX, y); x.textAlign = 'right'; x.fillText(rub(m.sub), P + CW - IN, y); x.textAlign = 'left';
+      y += 50; x.fillStyle = th.mut; x.fillText('Скидка', LX, y); x.fillStyle = At; x.textAlign = 'right'; x.fillText(rub(m.disc), P + CW - IN, y); x.textAlign = 'left';
     }
     y += 40;
     if (gift){ y = giftBlock(y) + 24; }
@@ -1402,7 +1403,7 @@ function drawCard(){
   const showQr = S.qrShow && qrImg;
   if (showQr) secs.push('qr');
   if (secs.length){
-    const pad = 40, inner = CW - 2*pad, X0 = P + pad;
+    const pad = IN, inner = CW - 2*pad, X0 = P + pad;
     const layout = (draw, y0) => {
       let yy = y0 + pad;
       const T = (t, X, Y) => { if (draw) x.fillText(t, X, Y); };
@@ -1451,7 +1452,7 @@ function drawCard(){
     layout(true, y);
     y += h;
   }
-  if (S.contacts){ y += 56; x.font = F(600, 29); x.fillStyle = At; wrap(x, S.contacts, CW, 2).forEach((l, i) => { if (i) y += 40; x.fillText(l, P, y); }); y -= 10; }
+  if (S.contacts){ y += 56; x.font = F(600, 29); x.fillStyle = At; wrap(x, S.contacts, CW - IN, 2).forEach((l, i) => { if (i) y += 40; x.fillText(l, LX, y); }); y -= 10; }
   y += P;
   const H = Math.min(H0, Math.ceil(y));
   const out = document.createElement('canvas'); out.width = W; out.height = H;
