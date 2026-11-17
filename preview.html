@@ -402,6 +402,11 @@ nav.tabs .badge[hidden]{display:none}
 .cmp{padding:16px}
 .infos{padding:8px 0}
 
+.hbtns{display:flex;align-items:center;gap:8px}
+.thb{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--s);border:1px solid var(--line);color:var(--ink);padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.thb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.thb:active{transform:scale(.94)}
+
 /* preview page layout (the rest is the app's own CSS) */
 body.pv{padding:24px 16px 48px}
 .pv-top{max-width:1180px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between}

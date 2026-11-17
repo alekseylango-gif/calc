@@ -414,13 +414,19 @@ nav.tabs .badge[hidden]{display:none}
 .tseg button[aria-pressed=true] svg{color:var(--a-txt)}
 .cmp{padding:16px}
 .infos{padding:8px 0}
+
+.hbtns{display:flex;align-items:center;gap:8px}
+.thb{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--s);border:1px solid var(--line);color:var(--ink);padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.thb svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.thb:active{transform:scale(.94)}
 </style>
 </head>
 <body data-tab="calc">
 
 <header class="top">
   <h1 id="hTitle">Расчёт</h1>
-  <span class="mono" id="hMono" role="img" aria-label="Алексей Ланго">АЛ</span>
+  <div class="hbtns"><button type="button" class="thb" id="thBtn" aria-label="Тема"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="thIco" d=""/></svg></button>
+  <span class="mono" id="hMono" role="img" aria-label="Алексей Ланго">АЛ</span></div>
 </header>
 
 <main>
@@ -1555,7 +1561,14 @@ function applyTheme(){
   root.style.setProperty('--a-txt', at);
   const ini = String(S.brand || 'Алексей Ланго').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'АЛ';
   $('hMono').textContent = ini; $('hMono').setAttribute('aria-label', S.brand || 'lango.show');
+  $('thIco').setAttribute('d', dark ? 'M12 3v2M12 19v2M5 5l1.4 1.4M17.6 17.6 19 19M3 12h2M19 12h2M5 19l1.4-1.4M17.6 6.4 19 5M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z' : 'M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z');
+  $('thBtn').setAttribute('aria-label', dark ? 'Светлая тема' : 'Тёмная тема');
 }
+$('thBtn').addEventListener('click', () => {
+  const dark = S.uiTheme === 'dark' || (S.uiTheme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  S.uiTheme = dark ? 'light' : 'dark'; if (typeof updateSettings === 'function') updateSettings(); else { applyTheme(); }
+  try { save(); } catch(e){}
+});
 
 /* ---------------- presentation ---------------- */
 function showModes(){ return [['icons','Состав'],['list','Смета'],['price','Цена']].concat(C.vars ? [['variants','Варианты']] : []); }
