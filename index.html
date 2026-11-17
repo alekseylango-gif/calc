@@ -391,6 +391,16 @@ b,strong{font-weight:600}
 .cl .chip{padding:8px 12px}
 nav.tabs button{gap:4px}
 @media (hover:none) and (pointer:coarse){ .chip{min-height:44px} .tier button.x{width:44px;height:44px} }
+.chips,#giftBox .chips{padding:12px 16px;align-items:center}
+.chip{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center}
+.seg button{display:grid;place-content:center;justify-items:center;row-gap:2px;align-content:center}
+.seg button small{display:block;margin:0}
+.tel{display:inline-block;font-size:13px;line-height:18px;color:var(--a-txt);text-decoration:none;margin-top:2px}
+nav.tabs button{position:relative}
+nav.tabs .badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:#C93B37;color:#fff;font:600 11px/18px var(--ui);text-align:center}
+nav.tabs .badge[hidden]{display:none}
+.svg-crisp,svg{shape-rendering:geometricPrecision}
+.hsum b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body data-tab="calc">
@@ -408,7 +418,10 @@ nav.tabs button{gap:4px}
     <div class="row"><input class="in title" id="cTitle" data-c="title" placeholder="Название, например «Свадьба»" autocomplete="off"></div>
     <div class="chips" id="chips"></div>
     <div class="row"><span class="lbl grow">Клиент</span><input class="in" style="max-width:60%" data-c="client" id="cClient" placeholder="необязательно" autocomplete="off"></div>
+    <div class="row"><span class="lbl grow">Телефон</span><input class="in" style="max-width:60%" data-c="phone" id="c_phone" type="tel" inputmode="tel" placeholder="+7 …" autocomplete="off"></div>
+    <div class="row"><span class="lbl grow">Площадка</span><input class="in" style="max-width:60%" data-c="venue" id="c_venue" placeholder="ресторан, адрес" autocomplete="off"></div>
     <div class="row"><div class="grow"><div class="lbl">Статус</div><div class="sub" id="holdHint"></div></div><select class="in" id="cStatus"></select></div>
+    <div class="row" id="paidRow" hidden><div class="grow"><div class="lbl">Внесено</div><div class="sub" id="paidHint"></div></div><div class="money"><input data-c="paid" id="c_paid" type="text" inputmode="numeric" placeholder="0"><span>₽</span></div></div>
     <div class="row"><div class="grow"><div class="lbl">Дата</div><div class="sub" id="dayHint"></div><div class="sub warn" id="dateWarn" hidden></div></div><div class="datewrap" id="dateWrap"><input class="in" type="date" id="cDate" aria-label="Дата"><span class="dph">Выбрать</span></div></div>
     <div class="row" style="display:block"><div class="seg" id="daySeg" role="group" aria-label="Тип дня">
       <button type="button" data-day="weekday">Будни<small id="kWd">×1</small></button>
@@ -441,6 +454,9 @@ nav.tabs button{gap:4px}
     <div class="row"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8h17v4h-17z M5 12v9h14v-9 M12 8v13 M12 8C10.5 4.5 7 4 7 6.2S9.8 8 12 8 M12 8c1.5-3.5 5-4 5-1.8S14.2 8 12 8"/></svg></span><div class="grow"><div class="lbl" id="giftName">Подарок</div><div class="sub" id="giftHint"></div></div><label class="sw"><input type="checkbox" id="giftOn" aria-label="Подарок в расчёте"><span></span></label></div>
     <div class="chips" id="giftChips"></div>
   </div>
+
+  <div class="gt">Заметки для себя</div>
+  <div class="group"><div class="field"><textarea class="in" id="c_notes" data-c="notes" rows="3" placeholder="Пожелания, тайминг, контакты площадки. Клиент не видит"></textarea></div></div>
 
   <div class="gt">Скидка</div>
   <div class="group">
@@ -530,6 +546,7 @@ nav.tabs button{gap:4px}
   <div class="group">
     <div class="row"><span class="lbl grow">Дату</span><label class="sw"><input type="checkbox" data-s="showDate" aria-label="Показывать дату"><span></span></label></div>
     <div class="row"><div class="grow"><div class="lbl">Тип дня</div><div class="sub">«будний день», «выходной день», «праздничный день»</div></div><label class="sw"><input type="checkbox" data-s="showDayType" aria-label="Показывать тип дня"><span></span></label></div>
+    <div class="row"><span class="lbl grow">Площадку</span><label class="sw"><input type="checkbox" data-s="showVenue" aria-label="Показывать площадку"><span></span></label></div>
     <div class="row"><span class="lbl grow">Количество гостей</span><label class="sw"><input type="checkbox" data-s="showGuests" aria-label="Показывать гостей"><span></span></label></div>
     <div class="row"><span class="lbl grow">Длительность</span><label class="sw"><input type="checkbox" data-s="showHours" aria-label="Показывать длительность"><span></span></label></div>
     <div class="row"><div class="grow"><div class="lbl">Список услуг в «Только цена»</div><div class="sub">Строка под суммой: «Ведущий, DJ, свет»</div></div><label class="sw"><input type="checkbox" data-s="priceList" aria-label="Список услуг под ценой"><span></span></label></div>
@@ -546,18 +563,25 @@ nav.tabs button{gap:4px}
   <div class="group" id="giftEditor"></div>
   <div class="foot">Подарок подбирается по названию мероприятия: «Свадьба», «Юбилей», «Корпоратив». В расчёте его можно выключить или выбрать другой.</div>
 
+  <div class="gt">Правила заказа</div>
+  <div class="group">
+    <div class="row"><div class="grow"><div class="lbl">Минимум часов</div><div class="sub">Для почасовых услуг. 0: без минимума</div></div>
+      <div class="stp" data-step="0.5"><button type="button" data-d="-1" aria-label="Меньше часов"></button><input data-s="minHours" data-t="num" type="number" inputmode="decimal" min="0"><button type="button" data-d="1" aria-label="Больше часов"></button></div></div>
+  </div>
+  <div class="foot">Минимум 3 часа поставлен ориентиром. Если клиент берёт меньше, в смете будет 3 ч.</div>
+
   <div class="gt">Ставка за час по количеству гостей</div>
   <div class="group" id="tiers"></div>
-  <div class="foot">Действует для услуг с включённым «Цена по гостям» (по умолчанию это ведущий). Пороги поставлены ориентиром, проверьте их под себя.</div>
+  <div class="foot">Действует для услуг с «Ценой по гостям» (по умолчанию ведущий). При плавном росте 36 гостей стоят почти как 35, а не на 2 000 ₽ в час дороже. Пороги поставлены ориентиром</div>
 
   <div class="gt">Дни и праздники</div>
   <div class="group">
     <div class="row"><div class="grow"><div class="lbl">Выходной</div><div class="sub">Суббота и воскресенье</div></div><div class="money"><span>×</span><input data-s="kWeekend" data-t="num" type="text" inputmode="decimal" style="width:64px"></div></div>
     <div class="row"><div class="grow"><div class="lbl">Праздник</div><div class="sub">Даты из списка ниже</div></div><div class="money"><span>×</span><input data-s="kHoliday" data-t="num" type="text" inputmode="decimal" style="width:64px"></div></div>
     <div class="field"><label for="s_hol">Праздничные даты, ДД.ММ через запятую</label><textarea class="in" id="s_hol" data-s="holidays" rows="3"></textarea></div>
-    <div class="field"><span class="flbl">Округлять ставку после коэффициента до, ₽</span><div class="seg" id="rrSeg"><button type="button" data-rr="0">Нет</button><button type="button" data-rr="100">100</button><button type="button" data-rr="500">500</button><button type="button" data-rr="1000">1 000</button></div></div>
+    <div class="field"><span class="flbl">Округлять ставку после коэффициента до, ₽</span><div class="seg" id="rrSeg"><button type="button" data-rr="smart">Умно</button><button type="button" data-rr="100">100</button><button type="button" data-rr="500">500</button><button type="button" data-rr="0">Нет</button></div></div>
   </div>
-  <div class="foot">Коэффициент видите только вы. Клиент видит «выходной день» или «праздничный день». С шагом 500: 13 000 × 1,2 = 15 600, клиенту уйдёт 15 500.</div>
+  <div class="foot">Коэффициент видите только вы, клиент видит «выходной день» или «праздничный день». «Умно» округляет ставки до 10 000 ₽ до сотен (4 000 × 1,2 = 4 800), крупнее до 500 ₽ (13 000 × 1,2 = 15 600 → 15 500).</div>
 
   <div class="gt">Продление</div>
   <div class="group">
@@ -634,14 +658,14 @@ const ICONS = {
   vinyl:{e:'💿',t:'Пластинка',p:'M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0z M9.5 12a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0z M6.3 12a5.7 5.7 0 0 1 5.7-5.7 M17.7 12a5.7 5.7 0 0 1-5.7 5.7'},
   headphones:{e:'🎧',t:'Наушники',p:'M4 15v-3a8 8 0 0 1 16 0v3 M4 15a2 2 0 0 1 2-2h1v7H6a2 2 0 0 1-2-2z M20 15a2 2 0 0 0-2-2h-1v7h1a2 2 0 0 0 2-2z'},
   note:{e:'🎵',t:'Музыка',p:'M9 18V5.5l11-2.5v12.5 M3 18a3 3 0 1 0 6 0a3 3 0 1 0-6 0z M14 15.5a3 3 0 1 0 6 0a3 3 0 1 0-6 0z'},
-  disco:{e:'🪩',t:'Дискошар',p:'M12 2v4 M5 13a7 7 0 1 0 14 0a7 7 0 1 0-14 0z M5 13h14 M12 6v14 M6.3 9.5h11.4 M6.3 16.5h11.4 M12 6c-2.6 2-2.6 12 0 14 M12 6c2.6 2 2.6 12 0 14'},
-  light:{e:'💡',t:'Свет',p:'M8 3h8l-1.2 6H9.2z M9.2 9L4.5 21h15L14.8 9 M10 14.5h4 M8.6 18h6.8'},
-  speaker:{e:'🔊',t:'Звук',p:'M7 2.5h10a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5H7A1.5 1.5 0 0 1 5.5 20V4A1.5 1.5 0 0 1 7 2.5z M8 15a4 4 0 1 0 8 0a4 4 0 1 0-8 0z M11 7a1 1 0 1 0 2 0a1 1 0 1 0-2 0z'},
+  disco:{e:'🪩',t:'Дискошар',p:'M12 2.5v3 M5.5 12.5a6.5 6.5 0 1 0 13 0a6.5 6.5 0 1 0-13 0z M5.5 12.5h13 M7 9h10 M7 16h10 M12 6v13'},
+  light:{e:'💡',t:'Свет',p:'M4 8.5h10l5-3v11l-5-3H4z M8 13.5v6 M5.5 19.5h5'},
+  speaker:{e:'🔊',t:'Звук',p:'M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z M9 14.5a3 3 0 1 0 6 0a3 3 0 1 0-6 0z M12 7h.01'},
   screen:{e:'🖥️',t:'Экран',p:'M3 4.5h18v11.5H3z M8 20.5h8 M12 16v4.5'},
   sparkle:{e:'✨',t:'Шоу, танцы',p:'M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z M18.5 15l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z'},
-  fog:{e:'🌫️',t:'Дым',p:'M7 17h10a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.7 1.2A3.4 3.4 0 0 0 7 17z M5 20.5h14'},
-  camera:{e:'📸',t:'Фото',p:'M4 7.5h3.5l1.8-3h5.4l1.8 3H20v12H4z M8.5 13.5a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0z'},
-  glass:{e:'🥂',t:'Бокал',p:'M8 3h8l-.6 5.5a3.4 3.4 0 0 1-6.8 0z M12 12v8.5 M8.5 20.5h7'},
+  fog:{e:'🌫️',t:'Дым',p:'M7 16h10a3.5 3.5 0 0 0 .3-7 5 5 0 0 0-9.7 1.2A3 3 0 0 0 7 16z M5 19.5h14'},
+  camera:{e:'📸',t:'Фото',p:'M4 7.5h3.5L9 5h6l1.5 2.5H20v11H4z M8.5 13a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0z'},
+  glass:{e:'🥂',t:'Бокал',p:'M8 3h8l-.5 5.5a3.5 3.5 0 0 1-7 0z M12 12v8 M8.5 20h7'},
   cake:{e:'🎂',t:'Торт',p:'M4 21h16 M5.5 21v-8h13v8 M5.5 16.5c2.2 1.4 4.3 1.4 6.5 0s4.3-1.4 6.5 0 M12 13V9.5 M12 4.5c-1 1.1-1 2.2 0 3c1-.8 1-1.9 0-3z'},
   heart:{e:'❤️',t:'Сердце',p:'M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z'},
   gift:{e:'🎁',t:'Подарок',p:'M3.5 8h17v4h-17z M5 12v9h14v-9 M12 8v13 M12 8C10.5 4.5 7 4 7 6.2S9.8 8 12 8 M12 8c1.5-3.5 5-4 5-1.8S14.2 8 12 8'},
@@ -653,7 +677,7 @@ const ICONS = {
   balloon:{e:'🎈',t:'Шар',p:'M12 3a5.5 6.5 0 0 0-5.5 6.5c0 3.6 2.8 6.5 5.5 6.5s5.5-2.9 5.5-6.5A5.5 6.5 0 0 0 12 3z M11 16l1 1.5 1-1.5 M12 17.5c0 2-1.5 2-1.5 3.5'},
   crown:{e:'👑',t:'Корона',p:'M4 19h16 M4.5 15.5L3.5 7l5 4L12 5l3.5 6 5-4-1 8.5z'},
   fireworks:{e:'🎆',t:'Салют',p:'M12 3v4 M12 17v4 M3 12h4 M17 12h4 M5.6 5.6l2.8 2.8 M15.6 15.6l2.8 2.8 M5.6 18.4l2.8-2.8 M15.6 8.4l2.8-2.8'},
-  mask:{e:'🎭',t:'Тема, костюмы',p:'M3.5 7c2.8-1 5.6-1 8.5.5 2.9-1.5 5.7-1.5 8.5-.5v4.5c0 4-3 6.5-5.5 6.5-1.6 0-2.4-1-3-2-.6 1-1.4 2-3 2C6.5 18 3.5 15.5 3.5 11.5z M7 11h2.5 M14.5 11H17'}
+  mask:{e:'🎭',t:'Тема, костюмы',p:'M4 6h16v5a8 8 0 0 1-16 0z M8.5 10.5h2 M13.5 10.5h2 M9 14.5c1.7 1.3 4.3 1.3 6 0'}
 };
 const svg = k => '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(ICONS[k]||ICONS.star).p+'"/></svg>';
 
@@ -679,11 +703,11 @@ const DEF_SERVICES = [
 ];
 const OLD_NOTE = 'Дата закрепляется за вами после предоплаты.';
 const DEF_S = {
-  brand:'Алексей Ланго', tagline:'Ведущий · DJ · lango.show', contacts:'', accent:'#D9A441',
+  brand:'Алексей Ланго', tagline:'Ведущий · DJ · lango.show', contacts:'+7 914 777 84 91', accent:'#D9A441',
   cardTheme:'dark', uiTheme:'auto', fileFmt:'jpg', mode:'icons',
   showDate:true, showDayType:true, showGuests:true, showHours:true, priceList:true, kSeparate:false, emoji:true,
-  tiers:[{upTo:20,price:9000},{upTo:35,price:11000},{upTo:50,price:13000}], tierOver:15000,
-  kWeekend:1.2, kHoliday:1.5, rateRound:500,
+  tiers:[{upTo:20,price:9000},{upTo:35,price:11000},{upTo:50,price:13000}], tierOver:15000, tierOverAt:80, tierSmooth:true, minHours:3, showVenue:true,
+  kWeekend:1.2, kHoliday:1.5, rateRound:'smart',
   holidays:'01.01, 02.01, 03.01, 04.01, 05.01, 06.01, 07.01, 08.01, 23.02, 08.03, 01.05, 09.05, 12.06, 04.11, 31.12',
   extShow:true, extMode:'pct', extPct:70, graceOn:true, graceMin:30,
   bookShow:true, ppMode:'pct', ppPct:30, ppRub:10000, validDays:7,
@@ -716,7 +740,7 @@ function newSel(s){ return {on:!!s.def, qty:'', price:'', cname:null, desc:null,
 function newCalc(){
   const sel = {}; S.services.forEach(s => sel[s.id] = newSel(s));
   return {id:'c' + Date.now().toString(36) + Math.random().toString(36).slice(2,5), status:'draft', created:Date.now(), sentAt:null,
-          title:'', client:'', date:'', dayManual:'', guests:30, hours:4, sel, discType:'pct', disc:'', expenses:'', note:null, ppMode:null, ppVal:null, gift:null, vars:null};
+          title:'', client:'', phone:'', venue:'', notes:'', paid:'', date:'', dayManual:'', guests:30, hours:4, sel, discType:'pct', disc:'', expenses:'', note:null, ppMode:null, ppVal:null, gift:null, vars:null};
 }
 
 /* ---------------- state ---------------- */
@@ -741,6 +765,8 @@ try {
   if (!Array.isArray(S.tiers)) S.tiers = clone(DEF_S.tiers);
   if (!Array.isArray(S.gifts)) S.gifts = clone(DEF_S.gifts);
   if (S.bookNote === 'Предоплату можно внести сразу, и дата закреплена за вами.') S.bookNote = DEF_S.bookNote;
+  if (v && v.S && v.S.rateRound === 500 && v.S.tierSmooth === undefined) S.rateRound = 'smart';
+  if (!String(S.contacts || '').trim()) S.contacts = DEF_S.contacts;
   S.gifts.forEach(g => { if (g.note === 'Слова и факты согласуем минимум за 7-10 дней до события.') g.note = 'Слова и факты согласуем минимум за 7-10 дней до события'; });
   if (v && v.C){ C = Object.assign(newCalc(), v.C); }
 } catch(e){ S = clone(DEF_S); }
@@ -800,10 +826,21 @@ const dayFactor = t => t === 'weekend' ? (num(S.kWeekend) || 1) : t === 'holiday
 const kfmt = k => '×' + (Math.round(k*100)/100).toLocaleString('ru-RU');
 function tierRate(g){
   const t = S.tiers.filter(x => num(x.upTo) > 0).sort((a,b) => num(a.upTo) - num(b.upTo));
-  for (const x of t) if (g <= num(x.upTo)) return num(x.price);
-  return num(S.tierOver) || (t.length ? num(t[t.length-1].price) : 0);
+  const over = num(S.tierOver) || (t.length ? num(t[t.length-1].price) : 0);
+  if (!S.tierSmooth){ for (const x of t) if (g <= num(x.upTo)) return num(x.price); return over; }
+  // smooth: price grows evenly between threshold points, rounded to 500
+  const pts = t.map(x => [num(x.upTo), num(x.price)]);
+  const lastUp = pts.length ? pts[pts.length-1][0] : 0;
+  pts.push([Math.max(num(S.tierOverAt) || lastUp + 30, lastUp + 1), over]);
+  if (g <= pts[0][0]) return pts[0][1];
+  for (let i = 1; i < pts.length; i++){
+    const [g0, p0] = pts[i-1], [g1, p1] = pts[i];
+    if (g <= g1) return Math.round((p0 + (p1 - p0) * (g - g0) / (g1 - g0)) / 500) * 500;
+  }
+  return over;
 }
-function roundRate(v){ const st = num(S.rateRound); return st ? Math.round(v / st) * st : Math.round(v); }
+function rrStep(v){ return S.rateRound === 'smart' ? (v < 10000 ? 100 : 500) : num(S.rateRound); }
+function roundRate(v){ const st = rrStep(v); return st ? Math.round(v / st) * st : Math.round(v); }
 function selOf(c, s){ const st = c.sel[s.id] || (c.sel[s.id] = newSel(s)); if (st.cname === undefined) st.cname = null; if (st.desc === undefined) st.desc = null; if (st.hide === undefined) st.hide = null; return st; }
 function unitShort(s){ return s.unit === 'piece' ? (s.unitName || 'шт') : (s.unit === 'hour' || s.unit === 'eventHour') ? 'ч' : ''; }
 const hostId = () => (S.services.find(s => s.tiers) || S.services.find(s => s.unit === 'hour') || {}).id || '';
@@ -837,12 +874,14 @@ function calc(c){
     const baseRate = num(st.price) || autoRate;
     let qty = 1;
     if (s.unit === 'hour' || s.unit === 'eventHour') qty = (st.qty === '' || st.qty == null) ? hrs : num(st.qty);
+    let minApplied = false;
+    if (s.unit === 'hour' && qty > 0 && num(S.minHours) && qty < num(S.minHours)){ qty = num(S.minHours); minApplied = true; }
     else if (s.unit === 'piece') qty = (st.qty === '' || st.qty == null) ? 1 : Math.floor(num(st.qty));
     if (!(qty > 0) || !(baseRate > 0)) continue;
     const kk = s.dayK ? k : 1;
     const rate = kk !== 1 ? roundRate(baseRate * kk) : baseRate;
     const sum = Math.round(rate * qty), base = Math.round(baseRate * qty);
-    items.push({s, st, baseRate, rate, k:kk, qty, sum, base, cost:Math.round(num(s.cost) * qty)});
+    items.push({s, st, baseRate, rate, k:kk, qty, sum, base, minApplied, cost:Math.round(num(s.cost) * qty)});
   }
   const subtotal = items.reduce((a,i) => a + i.sum, 0);
   const kExtra = items.reduce((a,i) => a + i.sum - i.base, 0);
@@ -859,7 +898,8 @@ function calc(c){
   const prepay = ppMode === 'rub' ? Math.min(ppVal, total) : Math.round(total * Math.min(100, ppVal) / 100 / 100) * 100;
   const costs = items.reduce((a,i) => a + i.cost, 0), expenses = num(c.expenses);
   const profit = total - costs - expenses;
-  return {g, hrs, auto, dayType, k, items, subtotal, kExtra, discount, after, total, ext, ppMode, ppVal, prepay, costs, expenses, profit};
+  const paid = Math.min(num(c.paid), total), balance = Math.max(0, total - num(c.paid));
+  return {paid, balance, g, hrs, auto, dayType, k, items, subtotal, kExtra, discount, after, total, ext, ppMode, ppVal, prepay, costs, expenses, profit};
 }
 
 /* lines as the client sees them: client names, hidden items folded into their target, rounding folded in */
@@ -920,6 +960,7 @@ function buildSvcList(){
       '</div>' +
     '</div>';
   }).join('');
+  if (typeof fmtInputs === "function") setTimeout(fmtInputs, 0);
 }
 function refreshCalc(r){
   if (document.activeElement !== $('cTitle')) $('cTitle').value = C.title;
@@ -937,6 +978,9 @@ function refreshCalc(r){
     if (r.auto){ const b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.textContent = 'Вернуть по дате'; b.onclick = () => { C.dayManual = ''; update(); }; hint.append(b); }
   } else hint.textContent = r.auto ? r.auto.why + ' → ' + DAY_NAMES[r.auto.type].toLowerCase() : 'Тип дня по дате';
   // status, hold and date clash
+  ['phone','venue','notes'].forEach(k => { const el = $('c_' + k); if (el && document.activeElement !== el) el.value = C[k] || ''; });
+  $('paidRow').hidden = !(C.status === 'paid' || C.status === 'done');
+  $('paidHint').textContent = num(C.paid) ? 'Остаток к оплате ' + rub(r.balance) : 'Сколько клиент уже внёс';
   const cs = $('cStatus'); if (!cs.options.length) cs.innerHTML = STATUSES.map(s => '<option value="'+s[0]+'">'+s[1]+'</option>').join('');
   cs.value = C.status || 'draft';
   const hu = holdUntil(C);
@@ -965,7 +1009,7 @@ function refreshCalc(r){
     const autoRate = s.tiers ? tierRate(r.g) : num(s.price);
     const unitTxt = s.unit === 'hour' ? '/ч' : s.unit === 'eventHour' ? ' за час мероприятия' : s.unit === 'piece' ? '/' + (s.unitName || 'шт') : '';
     let info = rub(num(st.price) || autoRate) + unitTxt + (s.tiers && !num(st.price) ? ' · по гостям' : '') + (num(st.price) ? ' · своя цена' : '');
-    if (st.on && it) info = (s.unit === 'fixed' ? '' : hfmt(it.qty) + ' ' + unitShort(s) + ' × ' + rub(it.rate) + ' = ') + rub(it.sum) + (it.k !== 1 ? ' · ' + DAY_NAMES[r.dayType].toLowerCase() : '');
+    if (st.on && it) info = (s.unit === 'fixed' ? '' : hfmt(it.qty) + ' ' + unitShort(s) + ' × ' + rub(it.rate) + ' = ') + rub(it.sum) + (it.k !== 1 ? ' · ' + DAY_NAMES[r.dayType].toLowerCase() : '') + (it.minApplied ? ' · минимум ' + hfmt(num(S.minHours)) + ' ч' : '');
     el.querySelector('[data-role=info]').textContent = info;
     const q = el.querySelector('[data-role=qty]');
     if (q && document.activeElement !== q) q.value = (st.qty === '' || st.qty == null) ? (s.unit === 'piece' ? 1 : hfmt(r.hrs).replace(',', '.')) : st.qty;
@@ -1048,7 +1092,7 @@ function wrap(x, text, maxW, maxLines){
 }
 function drawIcon(x, key, cx, cy, size, color){
   x.save(); x.translate(cx - size/2, cy - size/2); x.scale(size/24, size/24);
-  x.strokeStyle = color; x.lineWidth = 1.7; x.lineCap = 'round'; x.lineJoin = 'round';
+  x.strokeStyle = color; x.lineWidth = 1.6; x.lineCap = 'round'; x.lineJoin = 'round';
   x.stroke(new Path2D((ICONS[key] || ICONS.star).p)); x.restore();
 }
 const LS = (x, v) => { if ('letterSpacing' in x) x.letterSpacing = v; };
@@ -1058,6 +1102,7 @@ function metaParts(r){
   const p = [];
   if (S.showDate && C.date) p.push(dateText(C.date));
   if (S.showDayType && (C.date || C.dayManual)) p.push(DAY_CLIENT[r.dayType]);
+  if (S.showVenue && C.venue) p.push(C.venue);
   if (S.showGuests && r.g) p.push(nf(r.g) + ' ' + plural(r.g, ['гость','гостя','гостей']));
   if (S.showHours && r.hrs) p.push(hfmt(r.hrs) + ' ' + plural(r.hrs, ['час','часа','часов']));
   return p;
@@ -1097,7 +1142,11 @@ function drawCard(){
   wrap(x, C.title || 'Мероприятие', CW, 3).forEach((l, i) => { if (i) y += 76; x.fillText(l, P, y); });
   if (C.client){ y += 56; x.font = F(500, 34); x.fillStyle = th.ink; wrap(x, C.client, CW, 2).forEach((l,i) => { if (i) y += 44; x.fillText(l, P, y); }); }
   const meta = metaParts(r);
-  if (meta.length){ y += 52; x.font = F(500, 29); x.fillStyle = th.mut; wrap(x, meta.join('  ·  '), CW, 3).forEach((l,i) => { if (i) y += 40; x.fillText(l, P, y); }); }
+  if (meta.length){ y += 52; x.font = F(500, 29); x.fillStyle = th.mut;
+    const ml = []; let cur = '';
+    meta.forEach(p => { const t = cur ? cur + '  ·  ' + p : p; if (!cur || x.measureText(t).width <= CW) cur = t; else { ml.push(cur); cur = p; } });
+    if (cur) ml.push(cur);
+    ml.slice(0, 3).forEach((l,i) => { if (i) y += 40; x.fillText(l, P, y); }); }
   y += 56;
 
   function totalBlock(y0, old){
@@ -1243,8 +1292,8 @@ function drawCard(){
   const secs = [];
   const grace = graceText();
   if (S.extShow && (r.ext.length || grace)) secs.push('ext');
-  const note = noteText(), vd = validDate();
-  if (S.bookShow && (r.prepay || vd || note)) secs.push('book');
+  const note = noteText(), vd0 = validDate(), vd = r.paid > 0 ? '' : vd0;
+  if (S.bookShow && (r.prepay || vd || note || r.paid > 0)) secs.push('book');
   const showQr = S.qrShow && qrImg;
   if (showQr) secs.push('qr');
   if (secs.length){
@@ -1256,7 +1305,7 @@ function drawCard(){
         if (si){ yy += 30; if (draw){ x.strokeStyle = th.line; x.lineWidth = 2; x.beginPath(); x.moveTo(X0, yy); x.lineTo(X0 + inner, yy); x.stroke(); } yy += 36; }
         if (sname !== 'qr'){
           x.font = F(600, 26); x.fillStyle = th.mut;
-          T(sname === 'ext' ? 'Продление' : 'Как забронировать', X0, yy + 24); yy += 24;
+          T(sname === 'ext' ? 'Продление' : (r.paid > 0 ? 'Оплата' : 'Как забронировать'), X0, yy + 24); yy += 24;
         }
         if (sname === 'ext'){
           r.ext.forEach(e => { yy += 50; x.font = F(500, 30); x.fillStyle = th.ink; T(e.name, X0, yy); x.font = F(600, 30); x.textAlign = 'right'; T(rub(e.rate) + ' за час', X0 + inner, yy); x.textAlign = 'left'; });
@@ -1268,7 +1317,11 @@ function drawCard(){
             yy += gl.length*36 + 40 - 6;
           }
         }
-        if (sname === 'book'){
+        if (sname === 'book' && r.paid > 0){
+          yy += 54; x.font = F(500, 30); x.fillStyle = th.ink; T('Предоплата внесена', X0, yy); x.font = F(600, 32); x.textAlign = 'right'; T(rub(r.paid), X0 + inner, yy); x.textAlign = 'left';
+          yy += 50; x.font = F(500, 30); x.fillStyle = th.ink; T('Остаток к оплате', X0, yy); x.font = F(600, 34); x.fillStyle = At; x.textAlign = 'right'; T(rub(r.balance), X0 + inner, yy); x.textAlign = 'left';
+          yy += 8;
+        } else if (sname === 'book'){
           if (mode === 'variants' && r.ppMode === 'pct' && r.ppVal){ yy += 54; x.font = F(500, 30); x.fillStyle = th.ink; T('Предоплата', X0, yy); x.font = F(600, 30); x.fillStyle = At; x.textAlign = 'right'; T(r.ppVal + '% от выбранного варианта', X0 + inner, yy); x.textAlign = 'left'; }
           else if (r.prepay){ yy += 54; x.font = F(500, 30); x.fillStyle = th.ink; T(ppLabel(r), X0, yy); x.font = F(600, 34); x.fillStyle = At; x.textAlign = 'right'; T(rub(r.prepay), X0 + inner, yy); x.textAlign = 'left'; }
           if (vd){ yy += 48; x.font = F(400, 27); x.fillStyle = th.mut; T('Цена и дата закреплены до ' + vd, X0, yy); }
@@ -1305,7 +1358,7 @@ let drawT = null, lastCanvas = null;
 function canvasBlob(cv, type, q){ const u = cv.toDataURL(type, q), bin = atob(u.split(',')[1]), a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return new Blob([a], {type}); }
 function scheduleDraw(){ clearTimeout(drawT); drawT = setTimeout(renderCard, 120); }
 function renderCard(){
-  try { lastCanvas = drawCard(); $('cardImg').src = lastCanvas.toDataURL('image/jpeg', .9); renderShow(); } catch(e){ console.error(e); }
+  try { lastCanvas = drawCard(); $('cardImg').src = lastCanvas.toDataURL('image/png'); renderShow(); } catch(e){ console.error(e); }
   $('txtPrev').textContent = clientText();
 }
 
@@ -1354,10 +1407,11 @@ function clientText(){
   }
   const note = noteText(), vd = validDate();
   if (S.bookShow && (r.prepay || vd || note)){
-    out.push(''); out.push('Как забронировать:');
-    if (S.mode === 'variants' && C.vars && r.ppMode === 'pct' && r.ppVal) out.push('Предоплата: ' + r.ppVal + '% от выбранного варианта');
+    out.push(''); out.push(r.paid > 0 ? 'Оплата:' : 'Как забронировать:');
+    if (r.paid > 0){ out.push('Предоплата внесена: ' + rub(r.paid)); out.push('Остаток к оплате: ' + rub(r.balance)); }
+    else if (S.mode === 'variants' && C.vars && r.ppMode === 'pct' && r.ppVal) out.push('Предоплата: ' + r.ppVal + '% от выбранного варианта');
     else if (r.prepay) out.push(ppLabel(r) + ': ' + rub(r.prepay));
-    if (vd) out.push('Цена и дата закреплены до ' + vd);
+    if (vd && !(r.paid > 0)) out.push('Цена и дата закреплены до ' + vd);
     if (note) out.push(note);
   }
   if (S.qrShow && S.qrLink){ out.push(''); out.push((S.qrCaption || 'Видео и фото') + ': ' + S.qrLink); }
@@ -1414,6 +1468,7 @@ function buildSvcEditor(){
       '</div>' : '') +
     '</div>';
   }).join('');
+  if (typeof fmtInputs === "function") setTimeout(fmtInputs, 0);
 }
 function buildGiftEditor(){
   $('giftEditor').innerHTML = '<div class="row"><div class="grow"><div class="lbl">Подарки в расчётах</div><div class="sub">Выключите, если сейчас не предлагаете</div></div><label class="sw"><input type="checkbox" data-s="giftsOn" aria-label="Подарки в расчётах"><span></span></label></div>' +
@@ -1425,6 +1480,7 @@ function buildGiftEditor(){
       '<div class="field"><label>Для каких мероприятий, через запятую</label><input class="in" data-gf="events" value="'+esc(g.events)+'"></div>' +
       '<div class="sact"><button type="button" class="btn danger" data-giftdel="'+i+'">Удалить подарок</button></div></div>').join('') +
     '<div class="sact" style="padding-top:12px;border-top:1px solid var(--line)"><button type="button" class="btn" id="giftAdd">+ Добавить подарок</button></div>';
+  if (typeof fmtInputs === "function") setTimeout(fmtInputs, 0);
 }
 function svcSummary(s){
   let t;
@@ -1440,8 +1496,11 @@ function buildTiers(){
     '<div class="tier"><span class="t">до</span><div class="money" style="width:92px"><input type="number" inputmode="numeric" min="1" data-tier="'+i+'" data-f="upTo" value="'+esc(x.upTo)+'" style="width:44px"></div><span class="t">гостей</span>' +
     '<div class="grow"></div><div class="money"><input type="number" inputmode="numeric" step="500" min="0" data-tier="'+i+'" data-f="price" value="'+esc(x.price)+'" style="width:76px"><span>₽</span></div>' +
     '<button type="button" class="x" data-tierdel="'+i+'" aria-label="Удалить порог">×</button></div>').join('') +
-    '<div class="tier"><span class="t">больше</span><div class="grow"></div><div class="money"><input type="number" inputmode="numeric" step="500" min="0" id="tierOver" value="'+esc(S.tierOver)+'" style="width:76px"><span>₽</span></div><span style="width:36px"></span></div>' +
+    (S.tierSmooth ? '<div class="tier"><span class="t">к</span><div class="money" style="width:92px"><input type="number" inputmode="numeric" min="1" id="tierOverAt" value="'+esc(S.tierOverAt)+'" style="width:44px"></div><span class="t">гостям</span>' : '<div class="tier"><span class="t">больше</span>') +
+    '<div class="grow"></div><div class="money"><input type="number" inputmode="numeric" step="500" min="0" id="tierOver" value="'+esc(S.tierOver)+'" style="width:76px"><span>₽</span></div><span style="width:44px"></span></div>' +
+    '<div class="row"><div class="grow"><div class="lbl">Плавный рост между порогами</div><div class="sub">'+(S.tierSmooth ? 'Цена растёт по шагам 500 ₽, без скачков' : 'Цена меняется скачком на пороге')+'</div></div><label class="sw"><input type="checkbox" id="tierSmooth"'+(S.tierSmooth ? ' checked' : '')+' aria-label="Плавный рост"><span></span></label></div>' +
     '<div class="sact" style="padding-top:6px"><button type="button" class="btn" id="tierAdd">+ Порог</button></div>';
+  if (typeof fmtInputs === "function") setTimeout(fmtInputs, 0);
 }
 function fillSettings(){
   document.querySelectorAll('[data-s]').forEach(el => {
@@ -1454,7 +1513,7 @@ function fillSettings(){
   const cw = $('accWrap'); if (cw) cw.classList.toggle('on', !ACCENTS.some(c => c.toLowerCase() === String(S.accent).toLowerCase()));
   const pr = (sel, attr, val) => document.querySelectorAll(sel).forEach(b => b.setAttribute('aria-pressed', String(b.dataset[attr] === String(val))));
   pr('#fmtSeg button', 'fmt', S.fileFmt); pr('#roundSeg button', 'rm', S.roundMode); pr('#uiSeg button', 'ui', S.uiTheme);
-  pr('#rrSeg button', 'rr', num(S.rateRound)); pr('#extSeg button', 'ext', S.extMode); pr('#ppSegS button', 'pps', S.ppMode);
+  pr('#rrSeg button', 'rr', S.rateRound === 'smart' ? 'smart' : num(S.rateRound)); pr('#extSeg button', 'ext', S.extMode); pr('#ppSegS button', 'pps', S.ppMode);
   $('extPctRow').hidden = S.extMode !== 'pct'; $('extRubRow').hidden = S.extMode !== 'rub';
   $('graceRow').hidden = !S.graceOn;
   $('ppPctRow').hidden = S.ppMode !== 'pct'; $('ppRubRow').hidden = S.ppMode !== 'rub';
@@ -1500,18 +1559,20 @@ function renderHist(){
   document.querySelectorAll('#hFilter button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hf === hFilter)));
   let list = H.filter(h => hFilter === 'all' ? true : hFilter === 'work' ? ['draft','sent','think'].indexOf(h.C.status) >= 0 : hFilter === 'paid' ? h.C.status === 'paid' : ['done','lost'].indexOf(h.C.status) >= 0);
   list = list.slice().sort((a,b) => { const da = parseDate(a.C.date), db = parseDate(b.C.date); if (da && db) return hFilter === 'arch' ? db - da : da - db; if (da) return -1; if (db) return 1; return b.upd - a.upd; });
-  if (!list.length){ $('hList').innerHTML = '<div class="row"><span class="sub" style="margin:0">Здесь пока пусто.</span></div>'; return; }
+  if (!list.length){ $('hList').innerHTML = '<div class="row"><span class="sub" style="margin:0">Здесь пока пусто</span></div>'; return; }
   $('hList').innerHTML = list.map(h => {
     const c = h.C, d = parseDate(c.date), hu = holdUntil(c), cl = dateClash(c).length;
-    const sub = [h.from ? 'от ' + rub(h.from) : rub(h.total || 0), hu ? (hu < new Date() ? 'срок брони прошёл' : 'держу до ' + dmy(hu)) : '', cl ? 'дата пересекается' : ''].filter(Boolean).join(' · ');
+    const pd = num(c.paid); const sub = [h.from ? 'от ' + rub(h.from) : rub(h.total || 0), pd ? 'внесено ' + rub(pd) + ', остаток ' + rub(Math.max(0, (h.total || 0) - pd)) : '', c.venue || '', hu ? (hu < new Date() ? 'срок брони прошёл' : 'держу до ' + dmy(hu)) : '', cl ? 'дата пересекается' : ''].filter(Boolean).join(' · ');
     return '<div class="hitem'+(c.id === C.id ? ' cur' : '')+'" data-hid="'+esc(c.id)+'">' +
       '<div class="hmain" data-hact="open"><div class="hdate">'+(d ? '<b>'+d.getDate()+'</b><span>'+MON3[d.getMonth()]+'</span>' : '<span>без<br>даты</span>')+'</div>' +
-      '<div class="grow"><div class="lbl">'+esc(c.title || 'Мероприятие')+(c.client ? ', '+esc(c.client) : '')+'</div><div class="sub'+((hu && hu < new Date()) || cl ? ' warn' : '')+'">'+esc(sub)+'</div></div></div>' +
+      '<div class="grow"><div class="lbl">'+esc(c.title || 'Мероприятие')+(c.client ? ', '+esc(c.client) : '')+'</div>'+(c.phone ? '<a class="tel" href="tel:'+esc(String(c.phone).replace(/[^\d+]/g,''))+'">'+esc(c.phone)+'</a>' : '')+'<div class="sub'+((hu && hu < new Date()) || cl ? ' warn' : '')+'">'+esc(sub)+'</div></div></div>' +
       '<div class="hacts"><select class="in" data-hstatus aria-label="Статус">'+STATUSES.map(s => '<option value="'+s[0]+'"'+(s[0] === c.status ? ' selected' : '')+'>'+s[1]+'</option>').join('')+'</select>' +
       '<button type="button" class="btn" data-hact="copy">Копия</button>' + (d ? '<button type="button" class="btn" data-hact="ics">Календарь</button>' : '') +
       '<button type="button" class="btn danger" data-hact="del">Удалить</button></div></div>';
   }).join('');
 }
+function holdAlerts(){ const soon = Date.now() + 24*3600e3; return H.filter(h => { const hu = holdUntil(h.C); return hu && hu.getTime() <= soon; }).length; }
+function renderBadge(){ const n = holdAlerts(), b = document.querySelector('nav.tabs button[data-tab=hist]'); let bd = b.querySelector('.badge'); if (!bd){ bd = document.createElement('span'); bd.className = 'badge'; b.appendChild(bd); } bd.textContent = n; bd.hidden = !n; bd.setAttribute('aria-label', n + ' брони требуют ответа'); }
 function setStatus(c, st){ c.status = st; if ((st === 'sent' || st === 'think') && !c.sentAt) c.sentAt = Date.now(); }
 function openRecord(id){ const h = H.find(x => x.id === id); if (!h) return; upsertHist(); C = JSON.parse(JSON.stringify(h.C)); fixC(); update(); setTab('calc'); }
 function icsFor(c, total){
@@ -1528,7 +1589,18 @@ function icsFor(c, total){
 }
 
 /* ---------------- update cycle ---------------- */
-function update(){ ensureQr(); const r = calc(); refreshCalc(r); refreshClient(r); fillSettings(); persist(); scheduleDraw(); }
+function fmtInputs(){
+  document.querySelectorAll('.money input, [data-f=price], [data-f=extPrice], [data-f=cost], #tierOver').forEach(el => {
+    if (el.dataset.s === 'kWeekend' || el.dataset.s === 'kHoliday' || el.dataset.f === 'upTo') return;
+    if (el.type === 'number'){ el.type = 'text'; el.inputMode = 'numeric'; el.autocomplete = 'off'; }
+    if (document.activeElement === el) return;
+    const raw = String(el.value).trim(); if (!raw) return;
+    const n = num(raw); el.value = n ? nf(n).replace(/\u00A0/g, ' ') : '0';
+  });
+  document.querySelectorAll('.money input').forEach(el => { if (el.placeholder && /^\d{4,}$/.test(el.placeholder)) el.placeholder = nf(+el.placeholder).replace(/\u00A0/g, ' '); });
+}
+function update(){ ensureQr(); if (!String(S.contacts || '').trim() && document.activeElement !== $('s_contacts')) S.contacts = DEF_S.contacts; const r = calc(); refreshCalc(r); refreshClient(r); fillSettings(); fmtInputs(); renderBadge(); persist(); scheduleDraw(); }
+document.addEventListener('focusout', e => { if (e.target.closest && e.target.closest('.money, .field, .tier')) setTimeout(fmtInputs, 0); });
 function updateSettings(){ applyTheme(); update(); }
 function rebuildAll(){ buildSvcList(); buildSvcEditor(); buildGiftEditor(); buildTiers(); updateSettings(); }
 
@@ -1692,6 +1764,8 @@ $('v-set').addEventListener('input', e => {
   if (el.dataset.s) return; // handled globally
   if (el.id === 'accCustom'){ S.accent = el.value; updateSettings(); return; }
   if (el.id === 'tierOver'){ S.tierOver = num(el.value); refreshSvcSums(); update(); return; }
+  if (el.id === 'tierOverAt'){ S.tierOverAt = num(el.value); update(); return; }
+  if (el.id === 'tierSmooth'){ S.tierSmooth = el.checked; buildTiers(); update(); return; }
   if (el.dataset.tier != null){ S.tiers[+el.dataset.tier][el.dataset.f] = num(el.value); refreshSvcSums(); update(); return; }
   const gb = el.closest('.gedit');
   if (gb && el.dataset.gf){ const g = S.gifts.find(x => x.id === gb.dataset.gid); if (g){ g[el.dataset.gf] = el.value; update(); } return; }
@@ -1718,7 +1792,7 @@ function refreshSvcSums(){ document.querySelectorAll('.sedit').forEach(b => { co
 $('v-set').addEventListener('click', e => {
   const t = e.target;
   const pick = (attr, key, conv) => { const b = t.closest('[data-'+attr+']'); if (!b) return false; S[key] = conv ? conv(b.dataset[attr]) : b.dataset[attr]; updateSettings(); return true; };
-  if (pick('accent', 'accent') || pick('fmt', 'fileFmt') || pick('rm', 'roundMode') || pick('rr', 'rateRound', Number) || pick('ext', 'extMode') || pick('pps', 'ppMode')) return;
+  if (pick('accent', 'accent') || pick('fmt', 'fileFmt') || pick('rm', 'roundMode') || pick('rr', 'rateRound', v => v === 'smart' ? 'smart' : Number(v)) || pick('ext', 'extMode') || pick('pps', 'ppMode')) return;
   const ui = t.closest('[data-ui]'); if (ui && ui.closest('#uiSeg')){ S.uiTheme = ui.dataset.ui; updateSettings(); return; }
   const gd = t.closest('[data-giftdel]');
   if (gd){ if (gd.dataset.armed !== '1'){ gd.dataset.armed = '1'; gd.textContent = 'Точно удалить?'; setTimeout(() => { if (gd.isConnected){ gd.dataset.armed = ''; gd.textContent = 'Удалить подарок'; } }, 3000); return; }
