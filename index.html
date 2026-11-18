@@ -443,7 +443,9 @@ html.glass[data-ui=dark] #wall{opacity:.3}
 .lg-on{isolation:isolate;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 .lg-on>i.lg{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background:var(--img) var(--pos)/var(--size) no-repeat;filter:url(#lg);clip-path:inset(0 round var(--r))}
 .lg-on>i.lg2{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;box-shadow:inset 1.5px 1.5px .5px -.5px #fff9,inset -1px -1px .5px -.5px #fff5,inset 0 0 0 .5px #fff2}
-html.glass .chip.lg-on,html.glass .seg.lg-on,html.glass nav.tabs.lg-on{background:transparent}
+/* solid base under the glass: the refraction shifts the picture inward, and the edge must never show what lies beneath */
+html.glass .chip.lg-on,html.glass .seg.lg-on,html.glass nav.tabs.lg-on{background:var(--bg);background-clip:padding-box}
+.lg-on>i.lg{background-color:var(--bg)}
 html.glass .chip.lg-on>i.lg2{background:color-mix(in srgb,var(--s2) 72%,transparent)}
 html.glass .chip.on.lg-on>i.lg2{background:color-mix(in srgb,var(--a) 88%,transparent)}
 html.glass .seg.lg-on>i.lg2{background:color-mix(in srgb,var(--s2) 70%,transparent)}
@@ -1815,7 +1817,7 @@ let lgReady = false, lgRaf = 0;
 function lgInit(){
   if (lgReady) return; lgReady = true;
   document.body.insertAdjacentHTML('afterbegin', '<div id="wall" aria-hidden="true"></div>');
-  document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lg" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="5" result="a"/><feDiffuseLighting in="a" surfaceScale="7" diffuseConstant=".7071" result="x"><feDistantLight azimuth="0" elevation="45"/></feDiffuseLighting><feDiffuseLighting in="a" surfaceScale="7" diffuseConstant=".7071" result="y"><feDistantLight azimuth="90" elevation="45"/></feDiffuseLighting><feColorMatrix in="x" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0 0 0 0 1" result="r"/><feColorMatrix in="y" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1" result="g"/><feComposite in="r" in2="g" operator="arithmetic" k2="1" k3="1" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="' + (LG_WK ? 30 : -30) + '" xChannelSelector="R" yChannelSelector="G"/><feColorMatrix type="saturate" values="1.4"/></filter></svg>');
+  document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lg" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="5" result="a"/><feDiffuseLighting in="a" surfaceScale="7" diffuseConstant=".7071" result="x"><feDistantLight azimuth="0" elevation="45"/></feDiffuseLighting><feDiffuseLighting in="a" surfaceScale="7" diffuseConstant=".7071" result="y"><feDistantLight azimuth="90" elevation="45"/></feDiffuseLighting><feColorMatrix in="x" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0 0 0 0 1" result="r"/><feColorMatrix in="y" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1" result="g"/><feComposite in="r" in2="g" operator="arithmetic" k2="1" k3="1" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="' + (LG_WK ? 22 : -22) + '" xChannelSelector="R" yChannelSelector="G"/><feColorMatrix type="saturate" values="1.4"/></filter></svg>');
   const kick = () => { if (!lgRaf) lgRaf = requestAnimationFrame(() => { lgRaf = 0; lgGo(); }); };
   addEventListener('scroll', kick, {passive:true}); addEventListener('resize', () => { kick(); navPill(); }); addEventListener('load', () => { kick(); navPill(); });
   new ResizeObserver(kick).observe(document.body);
