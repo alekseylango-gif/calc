@@ -423,6 +423,20 @@ html,body{overscroll-behavior-y:none}
 body{min-height:100vh;min-height:100dvh}
 body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:20;pointer-events:none}
 body{padding-top:calc(env(safe-area-inset-top,0px) + 24px)}
+/* ---- Liquid Glass (switchable) ---- */
+#wall{position:fixed;inset:0;z-index:-1;pointer-events:none;background:none 0 0/100% 100% no-repeat;opacity:0;transition:opacity .3s}
+html.glass #wall{opacity:.22}
+html.glass[data-ui=dark] #wall{opacity:.3}
+.lg-on{isolation:isolate;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.lg-on>i.lg{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background:var(--img) var(--pos)/var(--size) no-repeat;filter:url(#lg);clip-path:inset(0 round var(--r))}
+.lg-on>i.lg2{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;box-shadow:inset 1.5px 1.5px .5px -.5px #fff9,inset -1px -1px .5px -.5px #fff5,inset 0 0 0 .5px #fff2}
+html.glass .chip.lg-on,html.glass .seg.lg-on,html.glass nav.tabs.lg-on{background:transparent}
+html.glass .chip.lg-on>i.lg2{background:color-mix(in srgb,var(--s2) 66%,transparent)}
+html.glass .chip.on.lg-on>i.lg2{background:color-mix(in srgb,var(--a) 88%,transparent)}
+html.glass .seg.lg-on>i.lg2{background:color-mix(in srgb,var(--s2) 62%,transparent)}
+html.glass nav.tabs.lg-on>i.lg2{background:color-mix(in srgb,var(--s) 66%,transparent)}
+html.glass .dock{bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}
+html.glass nav.tabs{left:12px;right:12px;bottom:max(10px,calc(env(safe-area-inset-bottom,0px) - 8px));max-width:520px;margin:0 auto;border:0;border-radius:30px;padding:6px 8px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
 
 /* preview page layout (the rest is the app's own CSS) */
 body.pv{padding:24px 16px 48px}

@@ -436,6 +436,20 @@ html,body{overscroll-behavior-y:none}
 body{min-height:100vh;min-height:100dvh}
 body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:20;pointer-events:none}
 body{padding-top:calc(env(safe-area-inset-top,0px) + 24px)}
+/* ---- Liquid Glass (switchable) ---- */
+#wall{position:fixed;inset:0;z-index:-1;pointer-events:none;background:none 0 0/100% 100% no-repeat;opacity:0;transition:opacity .3s}
+html.glass #wall{opacity:.22}
+html.glass[data-ui=dark] #wall{opacity:.3}
+.lg-on{isolation:isolate;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.lg-on>i.lg{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background:var(--img) var(--pos)/var(--size) no-repeat;filter:url(#lg);clip-path:inset(0 round var(--r))}
+.lg-on>i.lg2{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;box-shadow:inset 1.5px 1.5px .5px -.5px #fff9,inset -1px -1px .5px -.5px #fff5,inset 0 0 0 .5px #fff2}
+html.glass .chip.lg-on,html.glass .seg.lg-on,html.glass nav.tabs.lg-on{background:transparent}
+html.glass .chip.lg-on>i.lg2{background:color-mix(in srgb,var(--s2) 66%,transparent)}
+html.glass .chip.on.lg-on>i.lg2{background:color-mix(in srgb,var(--a) 88%,transparent)}
+html.glass .seg.lg-on>i.lg2{background:color-mix(in srgb,var(--s2) 62%,transparent)}
+html.glass nav.tabs.lg-on>i.lg2{background:color-mix(in srgb,var(--s) 66%,transparent)}
+html.glass .dock{bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}
+html.glass nav.tabs{left:12px;right:12px;bottom:max(10px,calc(env(safe-area-inset-bottom,0px) - 8px));max-width:520px;margin:0 auto;border:0;border-radius:30px;padding:6px 8px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
 </style>
 </head>
 <body data-tab="calc">
@@ -670,6 +684,7 @@ body{padding-top:calc(env(safe-area-inset-top,0px) + 24px)}
   <div class="gt">Приложение</div>
   <div class="group">
     <div class="row"><span class="lbl grow">Тема</span><div class="seg" id="uiSeg" style="width:220px"><button type="button" data-ui="auto">Авто</button><button type="button" data-ui="light">Светлое</button><button type="button" data-ui="dark">Тёмное</button></div></div>
+    <div class="row"><div class="grow"><div class="lbl">Стекло</div><div class="sub">Нижняя панель и переключатели в стиле Liquid Glass</div></div><label class="sw"><input type="checkbox" data-s="glass" aria-label="Стекло"><span></span></label></div>
     <div class="field"><div><div class="lbl">Резервная копия</div><div class="sub">Настройки, цены и все расчёты одним файлом. Сохраняйте раз в неделю</div></div>
       <div class="actions" style="margin-top:4px"><button type="button" class="btn" id="exportBtn">Сохранить</button><button type="button" class="btn" id="importBtn">Загрузить</button></div></div>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
@@ -773,7 +788,7 @@ const DEF_S = {
   qr:'', qrShow:true, qrCaption:'Видео и фото с моих мероприятий', qrLink:'',
   roundStep:1000, roundMode:'down',
   giftsOn:true, minProfit:0,
-  heroOn:true, heroAuto:{icons:'cool', price:'ok', variants:'smile', list:'point'}, heroesCustom:[], heroV:2, ppV:2,
+  heroOn:true, heroAuto:{icons:'cool', price:'ok', variants:'smile', list:'point'}, heroesCustom:[], heroV:2, ppV:2, glass:true,
   gifts:[
     {id:'love', label:'Подарок молодожёнам', title:'Трек «История вашей любви»', events:'Свадьба',
      desc:'Вместе с вами и гостями пишем слова о вашей истории, из них делается трек. Я презентую его в танцевальной части вечера.',
@@ -1781,9 +1796,50 @@ function fmtInputs(){
   });
   document.querySelectorAll('.money input').forEach(el => { if (el.placeholder && /^\d{4,}$/.test(el.placeholder)) el.placeholder = nf(+el.placeholder).replace(/\u00A0/g, ' '); });
 }
-function update(){ syncVars(); ensureQr(); if (!String(S.contacts || '').trim() && document.activeElement !== $('s_contacts')) S.contacts = DEF_S.contacts; const r = calc(); refreshCalc(r); refreshClient(r); fillSettings(); fmtInputs(); renderBadge(); persist(); scheduleDraw(); }
+function update(){ syncVars(); ensureQr(); if (!String(S.contacts || '').trim() && document.activeElement !== $('s_contacts')) S.contacts = DEF_S.contacts; const r = calc(); refreshCalc(r); refreshClient(r); fillSettings(); fmtInputs(); renderBadge(); persist(); scheduleDraw(); if (S.glass && lgReady) requestAnimationFrame(lgGo); }
 document.addEventListener('focusout', e => { if (e.target.closest && e.target.closest('.money, .field, .tier')) setTimeout(fmtInputs, 0); });
-function updateSettings(){ applyTheme(); update(); }
+function updateSettings(){ applyTheme(); update(); lgWall(); }
+/* ---------------- Liquid Glass ----------------
+   Based on «Liquid Glass» by Бюро SVLV (t.me/buro_svlv), adapted: inline, scroll-aware for fixed bars, switchable.
+   Only the bottom tab bar and the switches (chips and segments) get glass. */
+const LG_SEL = 'nav.tabs, main .chips .chip, main .seg';
+const LG_WK = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Safari\//.test(navigator.userAgent) && !/Chrome|Chromium|Edg|OPR|Android/.test(navigator.userAgent));
+let lgReady = false, lgRaf = 0;
+function lgInit(){
+  if (lgReady) return; lgReady = true;
+  document.body.insertAdjacentHTML('afterbegin', '<div id="wall" aria-hidden="true"></div>');
+  document.body.insertAdjacentHTML('beforeend', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lg" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="5" result="a"/><feDiffuseLighting in="a" surfaceScale="7" diffuseConstant=".7071" result="x"><feDistantLight azimuth="0" elevation="45"/></feDiffuseLighting><feDiffuseLighting in="a" surfaceScale="7" diffuseConstant=".7071" result="y"><feDistantLight azimuth="90" elevation="45"/></feDiffuseLighting><feColorMatrix in="x" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0 0 0 0 1" result="r"/><feColorMatrix in="y" values="0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1" result="g"/><feComposite in="r" in2="g" operator="arithmetic" k2="1" k3="1" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="' + (LG_WK ? 30 : -30) + '" xChannelSelector="R" yChannelSelector="G"/><feColorMatrix type="saturate" values="1.4"/></filter></svg>');
+  const kick = () => { if (!lgRaf) lgRaf = requestAnimationFrame(() => { lgRaf = 0; lgGo(); }); };
+  addEventListener('scroll', kick, {passive:true}); addEventListener('resize', kick); addEventListener('load', kick);
+  new ResizeObserver(kick).observe(document.body);
+}
+function isDarkUi(){ return S.uiTheme === 'dark' || (S.uiTheme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches); }
+function lgWallSvg(dark){
+  const A = S.accent || '#D9A441', B = dark ? '#5B6CFF' : '#7C8CFF', C = dark ? '#FF6B8A' : '#FF9AB0', ink = dark ? '#ffffff' : '#20232c';
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 860" preserveAspectRatio="none"><defs><filter id="b"><feGaussianBlur stdDeviation="28"/></filter></defs><rect width="400" height="860" fill="' + (dark ? '#0B0B0D' : '#EEEEF2') + '"/>' +
+    '<g filter="url(#b)" opacity="' + (dark ? .9 : .75) + '"><circle cx="70" cy="120" r="110" fill="' + A + '"/><circle cx="340" cy="330" r="120" fill="' + B + '"/><circle cx="90" cy="560" r="105" fill="' + C + '"/><circle cx="320" cy="760" r="120" fill="' + A + '"/></g>' +
+    '<g fill="none" stroke="' + ink + '" stroke-opacity="' + (dark ? .22 : .18) + '" stroke-width="1.2"><circle cx="300" cy="140" r="70"/><circle cx="300" cy="140" r="104"/><circle cx="110" cy="420" r="58"/><circle cx="270" cy="640" r="84"/>' +
+    '<path d="M0 260 L400 200 M0 480 L400 520 M0 700 L400 650 M60 0 L140 860 M300 0 L250 860"/></g></svg>';
+  return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+}
+function lgWall(){
+  const on = !!S.glass; document.documentElement.classList.toggle('glass', on);
+  if (!on){ document.querySelectorAll('.lg-on').forEach(el => { el.querySelectorAll(':scope>i.lg, :scope>i.lg2').forEach(i => i.remove()); el.classList.remove('lg-on'); }); return; }
+  lgInit(); $('wall').style.backgroundImage = lgWallSvg(isDarkUi()); lgGo();
+}
+function lgGo(){
+  if (!S.glass || !lgReady) return;
+  const wall = $('wall'), img = wall.style.backgroundImage, w = wall.getBoundingClientRect();
+  document.querySelectorAll(LG_SEL).forEach(el => {
+    if (!el.offsetParent && el.tagName !== 'NAV') return;
+    let p = el.querySelector(':scope>i.lg');
+    if (!p){ p = document.createElement('i'); p.className = 'lg'; const h = document.createElement('i'); h.className = 'lg2';
+      el.prepend(h); el.prepend(p); if (getComputedStyle(el).position === 'static') el.style.position = 'relative'; el.classList.add('lg-on'); }
+    const r = el.getBoundingClientRect(), c = getComputedStyle(el), bl = parseFloat(c.borderLeftWidth) || 0, bt = parseFloat(c.borderTopWidth) || 0;
+    p.style.cssText = '--img:' + img + ';--r:' + (parseFloat(c.borderTopLeftRadius) || 0) + 'px;--size:' + w.width + 'px ' + w.height + 'px;--pos:' + (w.left - r.left - bl) + 'px ' + (w.top - r.top - bt) + 'px';
+  });
+}
+
 function rebuildAll(){ buildSvcList(); buildSvcEditor(); buildGiftEditor(); buildTiers(); updateSettings(); }
 
 /* ---------------- events ---------------- */
@@ -1902,7 +1958,7 @@ $('hList').addEventListener('click', e => {
 function setTab(t){
   const ae = document.activeElement; if (ae && ae !== document.body && ae.blur) ae.blur();
   window.scrollTo(0, 0);
-  document.body.dataset.tab = t;
+  document.body.dataset.tab = t; if (S.glass && lgReady) requestAnimationFrame(lgGo);
   document.querySelectorAll('nav.tabs button').forEach(b => { if (b.dataset.tab === t) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('hTitle').textContent = t === 'calc' ? 'Расчёт' : t === 'client' ? 'Для клиента' : t === 'hist' ? 'Расчёты' : 'Настройки';
   if (t === 'hist'){ upsertHist(); renderHist(); }
@@ -2101,6 +2157,7 @@ if (document.fonts && document.fonts.load){
   Promise.all(['600 26px Unbounded','700 62px Unbounded','400 25px Onest','500 29px Onest','600 34px Onest']
     .map(f => document.fonts.load(f, 'АБВ абв 123 ₽'))).then(() => scheduleDraw(), () => {});
 }
+lgWall();
 window.__lango = {H:() => H, calcV:(i) => calcV(i), draw:() => drawCard().height, calc:() => calc(), model:() => clientModel(calc()), clientText, S:() => S, C:() => C, set:(o) => { Object.assign(S, o); rebuildAll(); }, setC:(o) => { Object.assign(C, o); update(); }, heroFor:(m) => heroIdFor(m), card:(t, q) => drawCard().toDataURL(t || 'image/jpeg', q || .8), tab:(t) => setTab(t), totals:() => C.vars ? C.vars.list.map((v, i) => calcV(i).total) : [calc().total]};
 })();
 </script>
