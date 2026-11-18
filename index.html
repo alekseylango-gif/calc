@@ -427,6 +427,15 @@ nav.tabs .badge[hidden]{display:none}
 .heroes button[aria-pressed=true]{border-color:var(--a);background:color-mix(in srgb,var(--a) 14%,var(--s2))}
 .hmine{display:flex;align-items:center;gap:12px;padding:4px 0}
 .hmine img{width:48px;height:48px;border-radius:12px;background:var(--s2);object-fit:cover;object-position:50% 0}
+
+.lbl.warn{color:var(--danger)}
+.btn.sm{flex:none;min-height:40px;padding:0 16px;font-size:14px;width:auto}
+
+/* status bar strip: solid page colour under the clock, so the iOS edge shade never lands on the header */
+html,body{overscroll-behavior-y:none}
+body{min-height:100vh;min-height:100dvh}
+body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:20;pointer-events:none}
+body{padding-top:calc(env(safe-area-inset-top,0px) + 24px)}
 </style>
 </head>
 <body data-tab="calc">
@@ -469,6 +478,7 @@ nav.tabs .badge[hidden]{display:none}
     <div id="varBox" hidden>
       <div class="row" style="display:block"><div class="seg" id="varSeg" role="group" aria-label="Какой вариант редактировать"></div></div>
       <div class="row"><span class="lbl grow">Название</span><input class="in" id="varName" style="max-width:55%"></div>
+      <div class="row" id="varAuto" hidden><div class="grow"><div class="lbl warn" id="varAutoT"></div><div class="sub" id="varAutoS"></div></div><button type="button" class="btn sm" id="varRebuild">Пересобрать</button></div>
       <div class="row"><div class="grow"><div class="lbl">Рекомендую этот вариант</div><div class="sub">На карточке будет рамка и «Чаще выбирают»</div></div><label class="sw"><input type="checkbox" id="varRec" aria-label="Рекомендую"><span></span></label></div>
     </div>
   </div>
@@ -502,7 +512,8 @@ nav.tabs .badge[hidden]{display:none}
     <div class="row" style="border-top:1px solid var(--line)"><div class="grow"><div class="lbl">Прочие расходы</div><div class="sub">Такси, ассистент, реквизит. Видите только вы</div></div><div class="money"><input id="cExp" data-c="expenses" type="number" inputmode="numeric" min="0" placeholder="0"><span>₽</span></div></div>
     <div class="cmp" id="cmp"></div>
   </div>
-  <div class="actions"><button type="button" class="btn" id="newCalc">Новый расчёт</button><button type="button" class="btn pri onlyMobile" id="toClient2">Клиенту →</button></div>
+  <div class="actions"><button type="button" class="btn" id="resetCalc">Сбросить к базовым</button><button type="button" class="btn" id="newCalc">Новый расчёт</button></div>
+  <div class="foot" style="text-align:center">Сброс вернёт услуги, цены, скидку, предоплату и варианты к настройкам. Название, дата, гости и часы останутся.</div>
 </section>
 
 <!-- ============ КЛИЕНТУ ============ -->
@@ -908,6 +919,31 @@ const stName = k => (STATUSES.find(s => s[0] === k) || STATUSES[0])[1];
 function holdUntil(c){ const n = Math.floor(num(S.validDays)); if (!n || !c.sentAt || !(c.status === 'sent' || c.status === 'think')) return null; const d = new Date(c.sentAt); d.setDate(d.getDate() + n); return d; }
 function dateClash(c){ if (!c.date) return []; return H.filter(h => h.id !== c.id && h.C.date === c.date && ['sent','think','paid'].indexOf(h.C.status) >= 0); }
 const VAR_NAMES = ['Базовый','Оптимальный','Всё включено'];
+/* variants follow «Оптимальный» (index 1): Базовый = only the host part of it, Всё включено = it plus every other service.
+   Venue conditions (eventHour / fixed units) stay exactly as in «Оптимальный». A variant edited by hand keeps the edit. */
+function deriveVar(i, opt){
+  const out = {}, anyTier = S.services.some(x => x.tiers && (opt[x.id] || {}).on);
+  S.services.forEach(s => {
+    const o = opt[s.id] || newSel(s), v = JSON.parse(JSON.stringify(o));
+    if (s.unit === 'eventHour' || s.unit === 'fixed'){ out[s.id] = v; return; }
+    if (i === 0) v.on = anyTier ? (!!s.tiers && !!o.on) : (s.unit === 'hour' && !!o.on);
+    else if (!v.on){ v.on = true; if (s.unit === 'piece' && !num(v.qty)) v.qty = 1; }
+    out[s.id] = v;
+  });
+  return out;
+}
+function syncVars(){
+  if (!C.vars || C.vars.list.length !== 3) return;
+  const L = C.vars.list, a = C.vars.active;
+  [0, 2].forEach(i => { const v = L[i];
+    if (!v.manual && v.sig && i === a && JSON.stringify(v.sel) !== v.sig) v.manual = true;
+    if (!v.manual){ v.sel = deriveVar(i, L[1].sel); v.sig = JSON.stringify(v.sel); } });
+  C.sel = L[a].sel;
+}
+function varsOrderBroken(){
+  if (!C.vars || C.vars.list.length !== 3) return false;
+  const t = [0, 1, 2].map(i => calcV(i).total); return t[0] > t[1] || t[1] > t[2];
+}
 function calcV(i){ return calc(Object.assign({}, C, {sel:C.vars.list[i].sel})); }
 // gift: C.gift null = pick by event title, '' = off, id = chosen
 function giftAuto(){ const t = String(C.title || '').toLowerCase(); if (!t) return null;
@@ -1049,6 +1085,11 @@ function refreshCalc(r){
     $('varSeg').innerHTML = C.vars.list.map((v, i) => '<button type="button" data-var="'+i+'" aria-pressed="'+(i === C.vars.active)+'">'+esc(v.name)+'<small>'+rub(calcV(i).total)+'</small></button>').join('');
     if (document.activeElement !== $('varName')) $('varName').value = C.vars.list[C.vars.active].name;
     $('varRec').checked = C.vars.rec === C.vars.active;
+    const av = C.vars.list[C.vars.active], man = C.vars.list.length === 3 && C.vars.active !== 1 && av.manual, bad = varsOrderBroken();
+    $('varAuto').hidden = !(man || bad);
+    $('varAutoT').textContent = bad ? 'Цены вариантов идут не по возрастанию' : 'Этот вариант изменён вручную';
+    $('varAutoS').textContent = bad ? 'Пересоберите, и «Базовый» и «Всё включено» снова встанут от «Оптимального»' : 'Пересобрать, чтобы он снова строился от «Оптимального»';
+    if (C.vars.active === 1) $('varAutoS').textContent = bad ? 'Ручные правки в других вариантах сбили порядок. Пересоберите их от этого варианта' : $('varAutoS').textContent;
   }
   const tierOn = S.services.some(s => s.tiers && selOf(C, s).on && !num(selOf(C, s).price));
   $('tierRow').hidden = !tierOn;
@@ -1655,6 +1696,8 @@ function fillSettings(){
 function applyTheme(){
   const root = document.documentElement;
   if (S.uiTheme === 'auto') root.removeAttribute('data-ui'); else root.setAttribute('data-ui', S.uiTheme);
+  requestAnimationFrame(() => { const bg = getComputedStyle(root).getPropertyValue('--bg').trim() || '#000';
+    document.querySelectorAll('meta[name="theme-color"]').forEach(m => { m.setAttribute('content', bg); m.removeAttribute('media'); }); });
   const A = S.accent || '#D9A441';
   root.style.setProperty('--a', A);
   root.style.setProperty('--a-ink', inkOn(A));
@@ -1738,7 +1781,7 @@ function fmtInputs(){
   });
   document.querySelectorAll('.money input').forEach(el => { if (el.placeholder && /^\d{4,}$/.test(el.placeholder)) el.placeholder = nf(+el.placeholder).replace(/\u00A0/g, ' '); });
 }
-function update(){ ensureQr(); if (!String(S.contacts || '').trim() && document.activeElement !== $('s_contacts')) S.contacts = DEF_S.contacts; const r = calc(); refreshCalc(r); refreshClient(r); fillSettings(); fmtInputs(); renderBadge(); persist(); scheduleDraw(); }
+function update(){ syncVars(); ensureQr(); if (!String(S.contacts || '').trim() && document.activeElement !== $('s_contacts')) S.contacts = DEF_S.contacts; const r = calc(); refreshCalc(r); refreshClient(r); fillSettings(); fmtInputs(); renderBadge(); persist(); scheduleDraw(); }
 document.addEventListener('focusout', e => { if (e.target.closest && e.target.closest('.money, .field, .tier')) setTimeout(fmtInputs, 0); });
 function updateSettings(){ applyTheme(); update(); }
 function rebuildAll(){ buildSvcList(); buildSvcEditor(); buildGiftEditor(); buildTiers(); updateSettings(); }
@@ -1806,13 +1849,23 @@ $('tierSeg').addEventListener('click', e => { const b = e.target.closest('[data-
 $('cStatus').addEventListener('change', e => { setStatus(C, e.target.value); update(); });
 $('varOn').addEventListener('change', e => {
   if (e.target.checked){
-    const base = JSON.parse(JSON.stringify(C.sel)), full = JSON.parse(JSON.stringify(C.sel));
-    S.services.forEach(s => { const b = base[s.id] || (base[s.id] = newSel(s)); b.on = !!s.tiers || (!S.services.some(x => x.tiers) && !!s.def);
-      const f = full[s.id] || (full[s.id] = newSel(s)); if (s.unit === 'piece' && !f.on){ f.on = true; f.qty = 1; } });
-    C.vars = {active:1, rec:1, list:[{name:VAR_NAMES[0], sel:base}, {name:VAR_NAMES[1], sel:C.sel}, {name:VAR_NAMES[2], sel:full}]};
+    C.vars = {active:1, rec:1, list:[{name:VAR_NAMES[0], sel:deriveVar(0, C.sel)}, {name:VAR_NAMES[1], sel:C.sel}, {name:VAR_NAMES[2], sel:deriveVar(2, C.sel)}]};
     if (S.mode !== 'variants') S.mode = 'variants';
   } else { C.vars = null; if (S.mode === 'variants') S.mode = 'icons'; }
   update();
+});
+$('varRebuild').addEventListener('click', () => { if (!C.vars) return; C.vars.list.forEach(v => { v.manual = false; v.sig = null; }); update(); });
+// reset this calculation to the defaults from settings, event details stay
+let resetUndo = null, resetT = 0;
+$('resetCalc').addEventListener('click', () => {
+  if (resetUndo){ C = resetUndo; resetUndo = null; fixC(); $('resetCalc').textContent = 'Сбросить к базовым'; update(); return; }
+  resetUndo = JSON.parse(JSON.stringify(C));
+  const d = newCalc();
+  ['sel','discType','disc','expenses','note','ppMode','ppVal','gift','vars','tierMode','hero','dayManual'].forEach(k => { C[k] = d[k]; });
+  if (S.mode === 'variants') S.mode = 'icons';
+  $('resetCalc').textContent = 'Вернуть как было';
+  clearTimeout(resetT); resetT = setTimeout(() => { resetUndo = null; $('resetCalc').textContent = 'Сбросить к базовым'; }, 8000);
+  update(); window.scrollTo({top:0, behavior:'smooth'});
 });
 $('varSeg').addEventListener('click', e => { const b = e.target.closest('[data-var]'); if (!b) return; C.vars.active = +b.dataset.var; C.sel = C.vars.list[C.vars.active].sel; update(); });
 $('varName').addEventListener('input', e => { C.vars.list[C.vars.active].name = e.target.value; update(); });
@@ -1847,6 +1900,8 @@ $('hList').addEventListener('click', e => {
 
 // tabs
 function setTab(t){
+  const ae = document.activeElement; if (ae && ae !== document.body && ae.blur) ae.blur();
+  window.scrollTo(0, 0);
   document.body.dataset.tab = t;
   document.querySelectorAll('nav.tabs button').forEach(b => { if (b.dataset.tab === t) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('hTitle').textContent = t === 'calc' ? 'Расчёт' : t === 'client' ? 'Для клиента' : t === 'hist' ? 'Расчёты' : 'Настройки';
@@ -1856,7 +1911,7 @@ function setTab(t){
 }
 document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 $('toClient').addEventListener('click', () => setTab('client'));
-$('toClient2').addEventListener('click', () => setTab('client'));
+
 
 // client view
 $('modeSeg').addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (!b) return; S.mode = b.dataset.mode; update(); });
@@ -2046,7 +2101,7 @@ if (document.fonts && document.fonts.load){
   Promise.all(['600 26px Unbounded','700 62px Unbounded','400 25px Onest','500 29px Onest','600 34px Onest']
     .map(f => document.fonts.load(f, 'АБВ абв 123 ₽'))).then(() => scheduleDraw(), () => {});
 }
-window.__lango = {H:() => H, calcV:(i) => calcV(i), draw:() => drawCard().height, calc:() => calc(), model:() => clientModel(calc()), clientText, S:() => S, C:() => C, set:(o) => { Object.assign(S, o); rebuildAll(); }, setC:(o) => { Object.assign(C, o); update(); }, heroFor:(m) => heroIdFor(m), card:(t, q) => drawCard().toDataURL(t || 'image/jpeg', q || .8), tab:(t) => setTab(t)};
+window.__lango = {H:() => H, calcV:(i) => calcV(i), draw:() => drawCard().height, calc:() => calc(), model:() => clientModel(calc()), clientText, S:() => S, C:() => C, set:(o) => { Object.assign(S, o); rebuildAll(); }, setC:(o) => { Object.assign(C, o); update(); }, heroFor:(m) => heroIdFor(m), card:(t, q) => drawCard().toDataURL(t || 'image/jpeg', q || .8), tab:(t) => setTab(t), totals:() => C.vars ? C.vars.list.map((v, i) => calcV(i).total) : [calc().total]};
 })();
 </script>
 <script>

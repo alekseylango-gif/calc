@@ -415,6 +415,15 @@ nav.tabs .badge[hidden]{display:none}
 .hmine{display:flex;align-items:center;gap:12px;padding:4px 0}
 .hmine img{width:48px;height:48px;border-radius:12px;background:var(--s2);object-fit:cover;object-position:50% 0}
 
+.lbl.warn{color:var(--danger)}
+.btn.sm{flex:none;min-height:40px;padding:0 16px;font-size:14px;width:auto}
+
+/* status bar strip: solid page colour under the clock, so the iOS edge shade never lands on the header */
+html,body{overscroll-behavior-y:none}
+body{min-height:100vh;min-height:100dvh}
+body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:20;pointer-events:none}
+body{padding-top:calc(env(safe-area-inset-top,0px) + 24px)}
+
 /* preview page layout (the rest is the app's own CSS) */
 body.pv{padding:24px 16px 48px}
 .pv-top{max-width:1180px;margin:0 auto 16px;display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between}
