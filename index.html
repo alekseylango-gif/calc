@@ -444,7 +444,10 @@ html.glass[data-ui=dark] #wall{opacity:.3}
 .lg-on>i.lg{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background:var(--img) var(--pos)/var(--size) no-repeat;filter:url(#lg);clip-path:inset(0 round var(--r))}
 .lg-on>i.lg2{position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;box-shadow:inset 1.5px 1.5px .5px -.5px #fff9,inset -1px -1px .5px -.5px #fff5,inset 0 0 0 .5px #fff2}
 /* solid base under the glass: the refraction shifts the picture inward, and the edge must never show what lies beneath */
-html.glass .chip.lg-on,html.glass .seg.lg-on,html.glass nav.tabs.lg-on{background:var(--bg);background-clip:padding-box}
+html.glass .chip.lg-on{background:color-mix(in srgb,var(--s2) 72%,var(--bg))}
+html.glass .chip.on.lg-on{background:color-mix(in srgb,var(--a) 88%,var(--bg))}
+html.glass .seg.lg-on{background:color-mix(in srgb,var(--s2) 70%,var(--bg))}
+html.glass nav.tabs.lg-on{background:color-mix(in srgb,var(--s) 70%,var(--bg))}
 .lg-on>i.lg{background-color:var(--bg)}
 html.glass .chip.lg-on>i.lg2{background:color-mix(in srgb,var(--s2) 72%,transparent)}
 html.glass .chip.on.lg-on>i.lg2{background:color-mix(in srgb,var(--a) 88%,transparent)}
