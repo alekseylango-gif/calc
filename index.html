@@ -888,7 +888,7 @@ const DEF_S = {
   roundStep:1000, roundMode:'down',
   giftsOn:true, minProfit:0,
   heroOn:true, heroAuto:{icons:'cool', price:'ok', variants:'smile', list:'point'}, heroesCustom:[], heroV:2, ppV:2, glass:true,
-  pkg:{names:['Базовый','Оптимальный','Всё включено'], base:null, full:null, baseShift:0, fullShift:0,
+  pkg:{names:['Базовый','Оптимальный','Всё включено'], short:['База','Оптима','Макси'], base:null, full:null, baseShift:0, fullShift:0,
        extras:[{t:'Сценарный план', v:[1,1,0]}, {t:'Персональный сценарий', v:[0,0,1]}]},
   gifts:[
     {id:'love', label:'Подарок молодожёнам', title:'Трек «История вашей любви»', events:'Свадьба',
@@ -941,7 +941,7 @@ try {
   if (!Array.isArray(S.tiers)) S.tiers = clone(DEF_S.tiers);
   if (!Array.isArray(S.gifts)) S.gifts = clone(DEF_S.gifts);
   if (!Array.isArray(S.howSteps)) S.howSteps = clone(DEF_S.howSteps);
-  S.pkg = Object.assign(clone(DEF_S.pkg), S.pkg || {}); if (!Array.isArray(S.pkg.names) || S.pkg.names.length !== 3) S.pkg.names = clone(DEF_S.pkg.names); if (!Array.isArray(S.pkg.extras)) S.pkg.extras = [];
+  S.pkg = Object.assign(clone(DEF_S.pkg), S.pkg || {}); if (!Array.isArray(S.pkg.names) || S.pkg.names.length !== 3) S.pkg.names = clone(DEF_S.pkg.names); if (!Array.isArray(S.pkg.extras)) S.pkg.extras = []; if (!Array.isArray(S.pkg.short) || S.pkg.short.length !== 3) S.pkg.short = clone(DEF_S.pkg.short);
   S.heroAuto = Object.assign(clone(DEF_S.heroAuto), S.heroAuto || {}); if (!Array.isArray(S.heroesCustom)) S.heroesCustom = [];
   if (v && v.S && !(v.S.ppV >= 2)){ S.ppMode = 'pct'; S.ppPct = 50; S.ppV = 2; }
   if (v && v.S && !(v.S.heroV >= 2)){ if (!S.heroAuto.list) S.heroAuto.list = 'point'; S.heroV = 2; } delete S.heroCorpOff;
@@ -1773,6 +1773,8 @@ function renderHeroSettings(){
     '<div class="sub">Свои картинки появятся здесь</div>';
 }
 /* ---------------- package table: services × packages ---------------- */
+/* short label for the table header only; a renamed package keeps its own name unless a short one is set */
+function pkgShort(i, name){ const sh = (S.pkg.short || [])[i]; return String(sh || '').trim() || name; }
 function pkgCellOpts(s, st){
   const on = st && st.on, hourly = s.unit === 'hour';
   const cur = !on ? '' : hourly ? String((st.qty === '' || st.qty == null) ? num(C.hours) : num(st.qty)) : s.unit === 'piece' ? String(num(st.qty) || 1) : '1';
@@ -1786,7 +1788,7 @@ function renderPkgTable(){
   const box = $('pkgTable'); if (!box || !C.vars) return;
   if (box.contains(document.activeElement)) return;
   const L = C.vars.list, tot = L.map((v, i) => calcV(i).total);
-  let h = '<div class="pk-row pk-head"><span></span>' + L.map((v, i) => '<b class="'+(C.vars.rec === i ? 'rec' : '')+'">'+esc(v.name)+'<small>'+rub(tot[i])+'</small>'+(i !== 1 && v.manual ? '<em>вручную</em>' : '')+'</b>').join('') + '</div>';
+  let h = '<div class="pk-row pk-head"><span></span>' + L.map((v, i) => '<b class="'+(C.vars.rec === i ? 'rec' : '')+'" title="'+esc(v.name)+'">'+esc(pkgShort(i, v.name))+'<small>'+rub(tot[i])+'</small>'+(i !== 1 && v.manual ? '<em>вручную</em>' : '')+'</b>').join('') + '</div>';
   S.services.filter(s => !isCond(s)).forEach(s => {
     h += '<div class="pk-row"><span class="pk-n pk-i" title="'+esc(s.name)+'" role="img" aria-label="'+esc(s.name)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(ICONS[s.icon] || ICONS.sparkle).p+'"/></svg></span>' + L.map((v, i) => { const c = pkgCellOpts(s, v.sel[s.id]);
       return '<select class="pk-c'+(c.cur ? ' on' : '')+'" data-pk="'+i+'" data-svc="'+s.id+'" aria-label="'+esc(s.name)+', '+esc(v.name)+'">'+c.html.replace('value="'+c.cur+'"', 'value="'+c.cur+'" selected')+'</select>'; }).join('') + '</div>';
@@ -1806,6 +1808,7 @@ function renderPkgSettings(){
   const sh = (k, opts) => '<select class="in" style="max-width:40%" data-pksh="'+k+'">' + opts.map(v => '<option value="'+v+'"'+((Number(P[k]) || 0) === v ? ' selected' : '')+'>'+(v === 0 ? 'как в Оптимальном' : (v > 0 ? '+' : '') + v + ' ч')+'</option>').join('') + '</select>';
   box.innerHTML =
     [0,1,2].map(i => '<div class="row"><span class="lbl grow">'+['Первый пакет','Средний пакет','Третий пакет'][i]+'</span><input class="in" style="max-width:55%" data-pkn="'+i+'" value="'+esc(P.names[i] || '')+'" aria-label="Название пакета '+(i+1)+'"></div>').join('') +
+    '<div class="field"><label>Коротко, для таблицы в расчёте</label><div class="pkn">' + [0,1,2].map(i => '<input class="in" data-pks="'+i+'" value="'+esc((P.short || [])[i] || '')+'" maxlength="8" aria-label="Короткое название '+(i+1)+'">').join('') + '</div></div>' +
     '<div class="field"><label>Что входит</label><div class="pkc"><span></span><span class="h">'+esc(P.names[0] || VAR_NAMES[0])+'</span><span class="h">'+esc(P.names[2] || VAR_NAMES[2])+'</span>' +
       svcs.map(s => '<span>'+esc(s.name)+'</span><input type="checkbox" data-pkb="'+s.id+'"'+(base[s.id] ? ' checked' : '')+' aria-label="'+esc(s.name)+' в первом пакете"><input type="checkbox" data-pkf="'+s.id+'"'+(pkgFullHas(s.id) ? ' checked' : '')+' aria-label="'+esc(s.name)+' в третьем пакете">').join('') +
     '</div><div class="sub" style="margin-top:6px">Первый пакет берёт отмеченное из «'+esc(P.names[1] || VAR_NAMES[1])+'», третий добавляет отмеченное к нему</div></div>' +
@@ -2153,6 +2156,7 @@ $('pkgSet').addEventListener('change', e => {
   else if (t.dataset.pkf){ const f = P.full ? Object.assign({}, P.full) : Object.fromEntries(S.services.map(s => [s.id, true])); f[t.dataset.pkf] = t.checked; P.full = f; }
   else if (t.dataset.pksh){ P[t.dataset.pksh] = Number(t.value) || 0; t.blur(); }
   else if (t.dataset.pkn != null){ P.names[+t.dataset.pkn] = t.value.trim() || VAR_NAMES[+t.dataset.pkn]; }
+  else if (t.dataset.pks != null){ P.short[+t.dataset.pks] = t.value.trim(); }
   else return;
   update();
 });
