@@ -777,6 +777,7 @@ const HEROES = [
 
 /* ---------------- icons (24×24 line paths, used in UI and on canvas) ---------------- */
 const ICONS = {
+  phone:{e:'📞',t:'Телефон',p:'M6.5 3.5h3l1.5 4-2 1.3a11 11 0 0 0 6.2 6.2l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2z'},
   doc:{e:'📝',t:'Документ',p:'M7 3h7l5 5v13H7z M14 3v5h5 M10 12h6 M10 15.5h6 M10 19h4'},
   mic:{e:'🎤',t:'Микрофон',p:'M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z M5.5 11a6.5 6.5 0 0 0 13 0 M12 17.5V21 M8.5 21h7'},
   vinyl:{e:'💿',t:'Пластинка',p:'M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0z M9.5 12a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0z M6.3 12a5.7 5.7 0 0 1 5.7-5.7 M17.7 12a5.7 5.7 0 0 1-5.7 5.7'},
@@ -1607,7 +1608,15 @@ function drawCard(){
     });
     y += hH;
   }
-  if (S.contacts){ y += 56; x.font = F(600, 29); x.fillStyle = At; wrap(x, S.contacts, CW - IN, 2).forEach((l, i) => { if (i) y += 40; x.fillText(l, LX, y); }); y -= 10; }
+  if (S.contacts){
+    /* phone row: circle on the same vertical as the step numbers, number on the same line as the step titles */
+    const X0 = P + IN, NX = 76; x.font = F(600, 30); const cl = wrap(x, S.contacts, CW - 2*IN - NX, 2);
+    y += 40; const cy = y + 26;
+    x.fillStyle = rgba(A, dark ? .18 : .16); x.beginPath(); x.arc(X0 + 26, cy, 26, 0, Math.PI*2); x.fill();
+    drawIcon(x, 'phone', X0 + 26, cy, 28, At);
+    x.fillStyle = At; cl.forEach((l, i) => x.fillText(l, X0 + NX, cy + 10 + i*40 - (cl.length - 1)*20));
+    y += 52 + (cl.length - 1)*20;
+  }
   y += P;
   const H = Math.min(H0, Math.ceil(y));
   const out = document.createElement('canvas'); out.width = W; out.height = H;
