@@ -481,6 +481,13 @@ html.glass nav.tabs button{position:relative;z-index:1}
 .pkc{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 12px;align-items:center;font-size:14px}
 .pkc .h{font-size:12px;color:var(--mut);text-align:center}
 .pkc input[type=checkbox]{width:22px;height:22px;accent-color:var(--a)}
+
+.hstep{display:grid;gap:8px}
+.hs-top{display:flex;align-items:center;gap:8px}
+.hs-top .in{flex:1;min-width:0}
+.hs-n{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;background:color-mix(in srgb,var(--a) 20%,var(--s2));color:var(--a-txt)}
+.hstep textarea{resize:vertical;min-height:84px;field-sizing:content;font:400 14px/1.35 var(--ui)}
+.pk-del:disabled{opacity:.3}
 </style>
 </head>
 <body data-tab="calc">
@@ -587,6 +594,8 @@ html.glass nav.tabs button{position:relative;z-index:1}
     <div class="row"><span class="lbl grow">Тема</span><div class="seg" id="themeSeg" style="width:190px"><button type="button" data-ct="dark">Тёмная</button><button type="button" data-ct="light">Светлая</button></div></div>
     <div class="row"><div class="grow"><div class="lbl">Продление</div><div class="sub" id="extHint"></div></div><label class="sw"><input type="checkbox" data-s="extShow" aria-label="Показывать продление"><span></span></label></div>
     <div class="row"><div class="grow"><div class="lbl">Как забронировать</div><div class="sub">Предоплата и срок</div></div><label class="sw"><input type="checkbox" data-s="bookShow" aria-label="Показывать бронирование"><span></span></label></div>
+    <div class="row"><div class="grow"><div class="lbl">Срок цен отдельной строкой</div><div class="sub">«Цены действуют при бронировании до…»</div></div><label class="sw"><input type="checkbox" data-s="validStrip" aria-label="Срок цен отдельной строкой"><span></span></label></div>
+    <div class="row"><div class="grow"><div class="lbl">Как мы работаем</div><div class="sub">Шаги от встречи до праздника</div></div><label class="sw"><input type="checkbox" data-s="howShow" aria-label="Как мы работаем"><span></span></label></div>
     <div class="row" id="qrRowClient"><div class="grow"><div class="lbl">QR-код</div><div class="sub" id="qrHintClient"></div></div><label class="sw"><input type="checkbox" data-s="qrShow" aria-label="Показывать QR-код"><span></span></label></div>
   </div>
 
@@ -620,6 +629,10 @@ html.glass nav.tabs button{position:relative;z-index:1}
     <div class="field"><label for="s_contacts">Контакты внизу карточки</label><input class="in" id="s_contacts" data-s="contacts" placeholder="+7 900 000-00-00 · @lango_show"></div>
     <div class="field"><span class="flbl">Акцентный цвет</span><div class="sw-acc" id="accents"></div></div>
   </div>
+
+  <div class="gt">Как мы работаем</div>
+  <div class="group" id="howSet"></div>
+  <div class="foot">Блок внизу карточки для клиента. Включается на вкладке «Клиенту».</div>
 
   <div class="gt">Пакеты</div>
   <div class="group" id="pkgSet"></div>
@@ -821,7 +834,13 @@ const DEF_S = {
   kWeekend:1.2, kHoliday:1.5, rateRound:'smart',
   holidays:'01.01, 02.01, 03.01, 04.01, 05.01, 06.01, 07.01, 08.01, 23.02, 08.03, 01.05, 09.05, 12.06, 04.11, 31.12',
   extShow:true, extMode:'pct', extPct:70, graceOn:true, graceMin:30,
-  bookShow:true, ppMode:'pct', ppPct:50, ppRub:10000, validDays:7,
+  bookShow:true, ppMode:'pct', ppPct:50, ppRub:10000, validDays:7, validStrip:true,
+  howShow:true, howTitle:'Как мы работаем', howSteps:[
+    {t:'Встреча', d:'Знакомимся, обсуждаем пожелания, концепцию и идеи, формируем предварительный тайминг вечера.'},
+    {t:'Договор и предоплата', d:'Подписываем официальный договор: дата закрепляется за вами, и вы спокойно готовитесь к празднику.'},
+    {t:'Анкета', d:'После встречи присылаю анкету о вас и ваших гостях.'},
+    {t:'Сценарий', d:'Получив анкету, пишу сценарный план вашего вечера.'},
+    {t:'На связи', d:'Встречи и видеосозвоны по ходу подготовки, когда нужно обсудить детали.'}],
   bookNote:'Предоплату можно внести сразу, и дата закреплена за вами',
   qr:'', qrShow:true, qrCaption:'Видео и фото с моих мероприятий', qrLink:'',
   roundStep:1000, roundMode:'down',
@@ -879,6 +898,7 @@ try {
   S.services.forEach(s => { if (s.minH === undefined){ s.minH = s.id === 'host' ? 2 : s.id === 'dj' ? 3 : 0; } });
   if (!Array.isArray(S.tiers)) S.tiers = clone(DEF_S.tiers);
   if (!Array.isArray(S.gifts)) S.gifts = clone(DEF_S.gifts);
+  if (!Array.isArray(S.howSteps)) S.howSteps = clone(DEF_S.howSteps);
   S.pkg = Object.assign(clone(DEF_S.pkg), S.pkg || {}); if (!Array.isArray(S.pkg.names) || S.pkg.names.length !== 3) S.pkg.names = clone(DEF_S.pkg.names); if (!Array.isArray(S.pkg.extras)) S.pkg.extras = [];
   S.heroAuto = Object.assign(clone(DEF_S.heroAuto), S.heroAuto || {}); if (!Array.isArray(S.heroesCustom)) S.heroesCustom = [];
   if (v && v.S && !(v.S.ppV >= 2)){ S.ppMode = 'pct'; S.ppPct = 50; S.ppV = 2; }
@@ -1506,7 +1526,7 @@ function drawCard(){
   const grace = graceText();
   if (S.extShow && (r.ext.length || grace)) secs.push('ext');
   const note = noteText(), vd0 = validDate(), vd = r.paid > 0 ? '' : vd0;
-  if (S.bookShow && (r.prepay || vd || note || r.paid > 0)) secs.push('book');
+  if (S.bookShow && (r.prepay || (vd && !S.validStrip) || note || r.paid > 0)) secs.push('book');
   const showQr = S.qrShow && qrImg;
   if (showQr) secs.push('qr');
   if (secs.length){
@@ -1537,7 +1557,7 @@ function drawCard(){
         } else if (sname === 'book'){
           if (mode === 'variants' && r.ppMode === 'pct' && r.ppVal){ yy += 54; x.font = F(500, 30); x.fillStyle = th.ink; T('Предоплата', X0, yy); x.font = F(600, 30); x.fillStyle = At; x.textAlign = 'right'; T(r.ppVal + '% от выбранного варианта', X0 + inner, yy); x.textAlign = 'left'; }
           else if (r.prepay){ yy += 54; x.font = F(500, 30); x.fillStyle = th.ink; T(ppLabel(r), X0, yy); x.font = F(600, 34); x.fillStyle = At; x.textAlign = 'right'; T(rub(r.prepay), X0 + inner, yy); x.textAlign = 'left'; }
-          if (vd){ yy += 48; x.font = F(400, 27); x.fillStyle = th.mut; T('Цена и дата закреплены до ' + vd, X0, yy); }
+          if (vd && !S.validStrip){ yy += 48; x.font = F(400, 27); x.fillStyle = th.mut; T('Цена и дата закреплены до ' + vd, X0, yy); }
           if (note){ x.font = F(400, 27); x.fillStyle = th.ink; wrap(x, note, inner, 4).forEach((s, k) => { yy += k ? 36 : 44; T(s, X0, yy); }); }
           yy += 8;
         }
@@ -1558,6 +1578,34 @@ function drawCard(){
     x.fillStyle = th.tile; rr(x, P, y, CW, h, 32); x.fill();
     layout(true, y);
     y += h;
+  }
+  /* ---- «Цены действуют при бронировании до …» ---- */
+  if (S.validStrip && vd){
+    y += 28; const hS = 92; x.fillStyle = rgba(A, dark ? .16 : .14); rr(x, P, y, CW, hS, 28); x.fill();
+    x.font = F(500, 30); x.fillStyle = th.ink; const t1 = 'Цены действуют при бронировании до '; x.fillText(t1, LX, y + 57);
+    const w1 = x.measureText(t1).width; x.font = F(600, 30); x.fillStyle = At; x.fillText(vd, LX + w1, y + 57);
+    y += hS;
+  }
+  /* ---- «Как мы работаем» ---- */
+  const steps = (S.howSteps || []).filter(s => String(s.t || '').trim() || String(s.d || '').trim());
+  if (S.howShow && steps.length){
+    const pad = IN, inner = CW - 2*pad, X0 = P + pad, NX = 76, tw = inner - NX;
+    const rows = steps.map(s => { x.font = F(400, 27); const t = String(s.t || '').trim(), d = String(s.d || '').trim();
+      x.font = F(600, 29); const tl = t ? wrap(x, t, tw, 2) : []; x.font = F(400, 27); const dl = d ? wrap(x, d, tw, 4) : [];
+      return {tl, dl, h: Math.max(52, tl.length*38 + dl.length*36 + (tl.length && dl.length ? 4 : 0))}; });
+    const hH = pad + 34 + 18 + rows.reduce((a, r0) => a + r0.h + 26, 0) - 26 + pad;
+    y += 28; x.fillStyle = th.tile; rr(x, P, y, CW, hH, 32); x.fill();
+    let yy = y + pad + 24; x.font = F(600, 26); x.fillStyle = th.mut; x.fillText(S.howTitle || 'Как мы работаем', X0, yy); yy += 28;
+    rows.forEach((r0, k) => {
+      const cy = yy + 26; x.fillStyle = rgba(A, dark ? .18 : .16); x.beginPath(); x.arc(X0 + 26, cy, 26, 0, Math.PI*2); x.fill();
+      x.font = F(600, 26); x.fillStyle = At; x.textAlign = 'center'; x.fillText(String(k + 1), X0 + 26, cy + 9); x.textAlign = 'left';
+      let ty = yy + 8;
+      r0.tl.forEach(s => { ty += 30; x.font = F(600, 29); x.fillStyle = th.ink; x.fillText(s, X0 + NX, ty); ty += 8; });
+      if (r0.tl.length && r0.dl.length) ty += 4;
+      r0.dl.forEach(s => { ty += 30; x.font = F(400, 27); x.fillStyle = th.mut; x.fillText(s, X0 + NX, ty); ty += 6; });
+      yy += r0.h + 26;
+    });
+    y += hH;
   }
   if (S.contacts){ y += 56; x.font = F(600, 29); x.fillStyle = At; wrap(x, S.contacts, CW - IN, 2).forEach((l, i) => { if (i) y += 40; x.fillText(l, LX, y); }); y -= 10; }
   y += P;
@@ -1624,9 +1672,12 @@ function clientText(){
     if (r.paid > 0){ out.push('Предоплата внесена: ' + rub(r.paid)); out.push('Остаток к оплате: ' + rub(r.balance)); }
     else if (S.mode === 'variants' && C.vars && r.ppMode === 'pct' && r.ppVal) out.push('Предоплата: ' + r.ppVal + '% от выбранного варианта');
     else if (r.prepay) out.push(ppLabel(r) + ': ' + rub(r.prepay));
-    if (vd && !(r.paid > 0)) out.push('Цена и дата закреплены до ' + vd);
+    if (vd && !(r.paid > 0) && !S.validStrip) out.push('Цена и дата закреплены до ' + vd);
     if (note) out.push(note);
   }
+  if (S.validStrip && vd && !(r.paid > 0)){ out.push(''); out.push('Цены действуют при бронировании до ' + vd + '.'); }
+  const steps = (S.howSteps || []).filter(s => String(s.t || '').trim() || String(s.d || '').trim());
+  if (S.howShow && steps.length){ out.push(''); out.push((S.howTitle || 'Как мы работаем') + ':'); steps.forEach((s, k) => out.push((k + 1) + '. ' + [String(s.t || '').trim(), String(s.d || '').trim()].filter(Boolean).join('. ').replace(/\.\./g, '.'))); }
   if (S.qrShow && S.qrLink){ out.push(''); out.push((S.qrCaption || 'Видео и фото') + ': ' + S.qrLink); }
   if (S.contacts){ out.push(''); out.push(S.contacts); }
   return out.join('\n').replace(/ /g, ' ');
@@ -1716,6 +1767,14 @@ function renderPkgSettings(){
         [0,1,2].map(i => '<button type="button" class="pk-c pk-b'+(e.v[i] ? ' on' : '')+'" data-dx="'+k+'" data-i="'+i+'" aria-pressed="'+!!e.v[i]+'">'+(e.v[i] ? '✓' : 'нет')+'</button>').join('') + '</div>').join('') +
     '</div><div class="pk-acts"><button type="button" class="btn sm" id="pkgDefAdd">+ Пункт без цены</button></div></div>';
 }
+function renderHowSettings(){
+  const box = $('howSet'); if (!box || box.contains(document.activeElement)) return;
+  box.innerHTML = '<div class="row"><span class="lbl grow">Заголовок</span><input class="in" style="max-width:60%" data-how-title value="'+esc(S.howTitle || '')+'" aria-label="Заголовок блока"></div>' +
+    (S.howSteps || []).map((s, k) => '<div class="field hstep"><div class="hs-top"><span class="hs-n">'+(k + 1)+'</span><input class="in" data-how-t="'+k+'" value="'+esc(s.t || '')+'" placeholder="Шаг" aria-label="Название шага '+(k + 1)+'">' +
+      '<button type="button" class="pk-del" data-how-up="'+k+'" aria-label="Выше"'+(k ? '' : ' disabled')+'>↑</button><button type="button" class="pk-del" data-how-del="'+k+'" aria-label="Удалить шаг">×</button></div>' +
+      '<textarea class="in" rows="3" data-how-d="'+k+'" placeholder="Что происходит на этом шаге" aria-label="Описание шага '+(k + 1)+'">'+esc(s.d || '')+'</textarea></div>').join('') +
+    '<div class="field"><div class="actions" style="margin-top:0"><button type="button" class="btn sm" id="howAdd">+ Шаг</button></div></div>';
+}
 /* ---------------- settings view ---------------- */
 function buildAccents(){
   $('accents').innerHTML = ACCENTS.map(c => '<button type="button" data-accent="'+c+'" style="background:'+c+'" aria-label="Цвет '+c+'"></button>').join('') +
@@ -1785,7 +1844,7 @@ function buildTiers(){
   if (typeof fmtInputs === "function") setTimeout(fmtInputs, 0);
 }
 function fillSettings(){
-  renderHeroSettings(); renderPkgSettings();
+  renderHeroSettings(); renderPkgSettings(); renderHowSettings();
   document.querySelectorAll('[data-s]').forEach(el => {
     if (document.activeElement === el) return;
     const k = el.dataset.s;
@@ -2025,6 +2084,18 @@ $('varOn').addEventListener('change', e => {
   } else { C.vars = null; if (S.mode === 'variants') S.mode = 'icons'; }
   update();
 });
+$('howSet').addEventListener('input', e => { const t = e.target;
+  if (t.dataset.howTitle != null) S.howTitle = t.value;
+  else if (t.dataset.howT != null) S.howSteps[+t.dataset.howT].t = t.value;
+  else if (t.dataset.howD != null) S.howSteps[+t.dataset.howD].d = t.value;
+  else return;
+  persist(); scheduleDraw(); });
+$('howSet').addEventListener('click', e => {
+  if (e.target.id === 'howAdd'){ S.howSteps.push({t:'', d:''}); update(); setTimeout(() => { const ins = $('howSet').querySelectorAll('[data-how-t]'); const l = ins[ins.length - 1]; if (l) l.focus(); }, 30); return; }
+  const b = e.target.closest('[data-how-del],[data-how-up]'); if (!b) return;
+  if (b.dataset.howDel != null) S.howSteps.splice(+b.dataset.howDel, 1);
+  else { const k = +b.dataset.howUp; if (k > 0){ const t = S.howSteps[k]; S.howSteps[k] = S.howSteps[k - 1]; S.howSteps[k - 1] = t; } }
+  update(); });
 $('pkgRebuild').addEventListener('click', () => { if (!C.vars) return; C.vars.list.forEach(v => { v.manual = false; v.sig = null; }); update(); });
 $('pkgSet').addEventListener('change', e => {
   const t = e.target, P = S.pkg;
