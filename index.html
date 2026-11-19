@@ -446,7 +446,6 @@ html.glass .chip{background:linear-gradient(180deg,var(--sheen),transparent 70%)
 html.glass .chip.on{background:linear-gradient(180deg,rgba(255,255,255,.28),transparent 70%),var(--a)}
 html.glass .seg{background:linear-gradient(180deg,var(--sheen),transparent 70%),color-mix(in srgb,var(--s2) 82%,transparent);-webkit-backdrop-filter:blur(10px) saturate(1.6);backdrop-filter:blur(10px) saturate(1.6)}
 html.glass .seg button[aria-pressed=true]{box-shadow:inset 1px 1px 0 var(--rim1),inset 0 0 0 .5px var(--rim3),0 1px 4px rgba(0,0,0,.18)}
-html.glass .dock{bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}
 html.glass nav.tabs{left:12px;right:12px;bottom:max(10px,calc(env(safe-area-inset-bottom,0px) - 8px));max-width:520px;margin:0 auto;border:0;border-radius:30px;padding:6px 8px;
   background:linear-gradient(180deg,var(--sheen),transparent 60%),color-mix(in srgb,var(--s) 62%,transparent);
   -webkit-backdrop-filter:blur(24px) saturate(1.8);backdrop-filter:blur(24px) saturate(1.8);
@@ -488,6 +487,48 @@ html.glass nav.tabs button{position:relative;z-index:1}
 .hs-n{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;background:color-mix(in srgb,var(--a) 20%,var(--s2));color:var(--a-txt)}
 .hstep textarea{resize:vertical;min-height:84px;field-sizing:content;font:400 14px/1.35 var(--ui)}
 .pk-del:disabled{opacity:.3}
+
+/* ---- layout fixes: nothing may run out of its block ---- */
+.pk-row{grid-template-columns:minmax(0,.9fr) repeat(3,minmax(0,1fr))}
+.pk-head b{hyphens:auto;-webkit-hyphens:auto;overflow-wrap:anywhere;padding:6px 3px}
+@media (max-width:400px){.pk-head b{font-size:11px}.pk-head b small{font-size:11px}.pk-c{font-size:12px}.pk-n{font-size:12px}}
+#ppHint{min-width:0;font-size:12px;overflow-wrap:anywhere}
+#ppHint+.money input{width:56px}
+.tier{gap:6px;padding:10px 12px}
+.tier .t{font-size:13px}
+.tier .t.tl{display:flex;flex-direction:column;line-height:1.15}
+.tier .t.tl small{font-size:11px}
+.tier .money{padding:0 10px;gap:4px}
+.tier .money.tq{width:56px;flex:none}
+.tier .money.tq input{width:100%}
+.tier .money.tp input{width:62px}
+.tier .x,.tier .tx{width:36px;height:36px;flex:none}
+@media (max-width:360px){
+  .stp button{width:38px}.stp input{width:40px}
+  .cmp{padding:12px;gap:6px}.cmp>div{padding:8px 6px}.cmp b{font-size:12px}.cmp span{font-size:11px}
+  .tier{gap:4px;padding:10px 8px}.tier .money.tp input{width:52px}.tier .money.tq{width:50px}
+  .pk-row{gap:4px}
+}
+/* glass: the total bar is part of the bottom panel, same shape, width and material */
+html.glass .dock{left:12px;right:12px;max-width:520px;margin:0 auto;border:0;border-radius:30px;padding:8px 8px 8px 20px;
+  bottom:calc(max(10px,calc(env(safe-area-inset-bottom,0px) - 8px)) + 70px);
+  background:linear-gradient(180deg,var(--sheen),transparent 60%),color-mix(in srgb,var(--s) 62%,transparent);
+  -webkit-backdrop-filter:blur(24px) saturate(1.8);backdrop-filter:blur(24px) saturate(1.8);
+  box-shadow:inset 1px 1px 0 var(--rim1),inset -1px -1px 0 var(--rim2),inset 0 0 0 .5px var(--rim3),0 10px 30px rgba(0,0,0,.22)}
+html.glass .dock .btn{border-radius:22px;height:48px}
+
+/* package table: service icons on the left instead of names */
+.pk-row{grid-template-columns:44px repeat(3,minmax(0,1fr))}
+.pk-xr{grid-template-columns:44px repeat(3,minmax(0,1fr))}
+.pk-i{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--a) 14%,var(--s2));color:var(--a-txt)}
+.pk-i svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.pk-head b{font-size:12px}
+.pk-head b small{font-size:12px}
+.pk-c{font-size:13px}
+@media (max-width:360px){.pk-row,.pk-xr{grid-template-columns:40px repeat(3,minmax(0,1fr))}.pk-i{width:36px;height:36px}.pk-head b,.pk-head b small,.pk-c{font-size:11px}
+  #varSeg button{font-size:12px;padding-left:4px;padding-right:4px}
+  #holdHint{white-space:normal}
+  .row{flex-wrap:wrap;row-gap:8px}.row>.grow{min-width:min-content}.row>.grow~*:last-child{margin-left:auto}}
 </style>
 </head>
 <body data-tab="calc">
@@ -1747,7 +1788,7 @@ function renderPkgTable(){
   const L = C.vars.list, tot = L.map((v, i) => calcV(i).total);
   let h = '<div class="pk-row pk-head"><span></span>' + L.map((v, i) => '<b class="'+(C.vars.rec === i ? 'rec' : '')+'">'+esc(v.name)+'<small>'+rub(tot[i])+'</small>'+(i !== 1 && v.manual ? '<em>вручную</em>' : '')+'</b>').join('') + '</div>';
   S.services.filter(s => !isCond(s)).forEach(s => {
-    h += '<div class="pk-row"><span class="pk-n">'+esc(s.name)+'</span>' + L.map((v, i) => { const c = pkgCellOpts(s, v.sel[s.id]);
+    h += '<div class="pk-row"><span class="pk-n pk-i" title="'+esc(s.name)+'" role="img" aria-label="'+esc(s.name)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+(ICONS[s.icon] || ICONS.sparkle).p+'"/></svg></span>' + L.map((v, i) => { const c = pkgCellOpts(s, v.sel[s.id]);
       return '<select class="pk-c'+(c.cur ? ' on' : '')+'" data-pk="'+i+'" data-svc="'+s.id+'" aria-label="'+esc(s.name)+', '+esc(v.name)+'">'+c.html.replace('value="'+c.cur+'"', 'value="'+c.cur+'" selected')+'</select>'; }).join('') + '</div>';
   });
   (C.vars.extras || []).forEach((e, k) => {
@@ -1843,11 +1884,11 @@ function svcSummary(s){
 function buildTiers(){
   const t = S.tiers;
   $('tiers').innerHTML = t.map((x, i) =>
-    '<div class="tier"><span class="t">до</span><div class="money" style="width:92px"><input type="number" inputmode="numeric" min="1" data-tier="'+i+'" data-f="upTo" value="'+esc(x.upTo)+'" style="width:44px"></div><span class="t">гостей</span>' +
-    '<div class="grow"></div><div class="money"><input type="number" inputmode="numeric" step="500" min="0" data-tier="'+i+'" data-f="price" value="'+esc(x.price)+'" style="width:76px"><span>₽</span></div>' +
+    '<div class="tier"><span class="t">до</span><div class="money tq"><input type="number" inputmode="numeric" min="1" data-tier="'+i+'" data-f="upTo" value="'+esc(x.upTo)+'"></div><span class="t">гостей</span>' +
+    '<div class="grow"></div><div class="money tp"><input type="number" inputmode="numeric" step="500" min="0" data-tier="'+i+'" data-f="price" value="'+esc(x.price)+'"><span>₽</span></div>' +
     '<button type="button" class="x" data-tierdel="'+i+'" aria-label="Удалить порог">×</button></div>').join('') +
-    '<div class="tier"><span class="t">свыше, мягкий к</span><div class="money" style="width:80px"><input type="number" inputmode="numeric" min="1" id="tierOverAt" value="'+esc(S.tierOverAt)+'" style="width:36px"></div><span class="t">гост.</span>' +
-    '<div class="grow"></div><div class="money"><input type="number" inputmode="numeric" step="500" min="0" id="tierOver" value="'+esc(S.tierOver)+'" style="width:76px"><span>₽</span></div><span style="width:44px"></span></div>' +
+    '<div class="tier"><span class="t tl">свыше<small>мягко к</small></span><div class="money tq"><input type="number" inputmode="numeric" min="1" id="tierOverAt" value="'+esc(S.tierOverAt)+'"></div><span class="t">гостей</span>' +
+    '<div class="grow"></div><div class="money tp"><input type="number" inputmode="numeric" step="500" min="0" id="tierOver" value="'+esc(S.tierOver)+'"><span>₽</span></div><span class="tx"></span></div>' +
     '<div class="row"><div class="grow"><div class="lbl">Мягкий рост в новом расчёте</div><div class="sub">'+(S.tierSmooth ? 'Новый расчёт откроется с мягким ростом' : 'Новый расчёт откроется с полным ростом')+'</div></div><label class="sw"><input type="checkbox" id="tierSmooth"'+(S.tierSmooth ? ' checked' : '')+' aria-label="Плавный рост"><span></span></label></div>' +
     '<div class="sact" style="padding-top:6px"><button type="button" class="btn" id="tierAdd">+ Порог</button></div>';
   if (typeof fmtInputs === "function") setTimeout(fmtInputs, 0);
