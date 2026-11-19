@@ -457,6 +457,30 @@ html.glass nav.tabs .tabpill{display:block;position:absolute;left:0;top:6px;bott
   background:linear-gradient(180deg,var(--sheen),transparent 70%),color-mix(in srgb,var(--a) 20%,var(--s2));
   transition:transform .35s cubic-bezier(.3,1.3,.5,1),width .35s cubic-bezier(.3,1.3,.5,1),opacity .2s}
 html.glass nav.tabs button{position:relative;z-index:1}
+
+/* package table */
+.pk{display:grid;gap:6px}
+.pk-row{display:grid;grid-template-columns:minmax(0,1.15fr) repeat(3,minmax(0,1fr));gap:6px;align-items:center}
+.pk-head b{display:flex;flex-direction:column;align-items:center;text-align:center;font-size:12px;font-weight:600;line-height:1.2;color:var(--ink);padding:6px 2px;border-radius:10px;background:var(--s2)}
+.pk-head b small{font-size:12px;font-weight:600;color:var(--a-txt);margin-top:2px}
+.pk-head b em{font-style:normal;font-size:11px;font-weight:500;color:var(--mut)}
+.pk-head b.rec{box-shadow:inset 0 0 0 1.5px var(--a)}
+.pk-n{font-size:13px;font-weight:500;line-height:1.25;min-width:0;overflow-wrap:anywhere}
+.pk-c{appearance:none;-webkit-appearance:none;width:100%;min-height:40px;border:0;border-radius:10px;background:var(--s2);color:var(--mut);font:600 13px/1 var(--ui);text-align:center;text-align-last:center;padding:0 4px;cursor:pointer}
+.pk-c.on{background:color-mix(in srgb,var(--a) 22%,var(--s2));color:var(--ink)}
+.pk-xn{display:flex;align-items:center;min-width:0;gap:2px}
+.pk-xr .pk-xn{grid-column:1/-1;margin-top:4px}
+.pk-xr>span{grid-column:1}
+.pk-t{flex:1;min-width:0;min-height:40px;border:0;border-radius:10px;background:transparent;color:var(--ink);font:500 13px/1.25 var(--ui);padding:0}
+.pk-t:focus{background:var(--s2);outline:none;padding:0 6px}
+.pk-del{flex:none;width:24px;height:24px;border:0;border-radius:50%;background:none;color:var(--mut);font-size:18px;line-height:1;cursor:pointer;padding:0}
+.pk-foot{font-size:12px;color:var(--mut);line-height:1.35;margin-top:4px}
+.pk-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pk-acts .btn.sm{flex:1 1 auto}
+.pkn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pkc{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 12px;align-items:center;font-size:14px}
+.pkc .h{font-size:12px;color:var(--mut);text-align:center}
+.pkc input[type=checkbox]{width:22px;height:22px;accent-color:var(--a)}
 </style>
 </head>
 <body data-tab="calc">
@@ -497,7 +521,9 @@ html.glass nav.tabs button{position:relative;z-index:1}
   <div class="group">
     <div class="row"><div class="grow"><div class="lbl">Три варианта для клиента</div><div class="sub">Базовый, оптимальный и всё включено в одной карточке</div></div><label class="sw"><input type="checkbox" id="varOn" aria-label="Три варианта"><span></span></label></div>
     <div id="varBox" hidden>
-      <div class="row" style="display:block"><div class="seg" id="varSeg" role="group" aria-label="Какой вариант редактировать"></div></div>
+      <div class="row" style="display:block"><div class="lbl" style="margin-bottom:8px">Состав пакетов</div><div class="pk" id="pkgTable"></div>
+        <div class="pk-acts"><button type="button" class="btn sm" id="pkgHostOnly">Базовый: только ведущий</button><button type="button" class="btn sm" id="pkgRebuild">Собрать по умолчанию</button><button type="button" class="btn sm" id="pkgAddX">+ Пункт без цены</button></div></div>
+      <div class="row" style="display:block"><div class="sub" style="margin-bottom:8px">Подробная правка варианта: выберите его, и услуги ниже будут относиться к нему</div><div class="seg" id="varSeg" role="group" aria-label="Какой вариант редактировать"></div></div>
       <div class="row"><span class="lbl grow">Название</span><input class="in" id="varName" style="max-width:55%"></div>
       <div class="row" id="varAuto" hidden><div class="grow"><div class="lbl warn" id="varAutoT"></div><div class="sub" id="varAutoS"></div></div><button type="button" class="btn sm" id="varRebuild">Пересобрать</button></div>
       <div class="row"><div class="grow"><div class="lbl">Рекомендую этот вариант</div><div class="sub">На карточке будет рамка и «Чаще выбирают»</div></div><label class="sw"><input type="checkbox" id="varRec" aria-label="Рекомендую"><span></span></label></div>
@@ -594,6 +620,10 @@ html.glass nav.tabs button{position:relative;z-index:1}
     <div class="field"><label for="s_contacts">Контакты внизу карточки</label><input class="in" id="s_contacts" data-s="contacts" placeholder="+7 900 000-00-00 · @lango_show"></div>
     <div class="field"><span class="flbl">Акцентный цвет</span><div class="sw-acc" id="accents"></div></div>
   </div>
+
+  <div class="gt">Пакеты</div>
+  <div class="group" id="pkgSet"></div>
+  <div class="foot">Так собираются три варианта в новом расчёте. В самом расчёте любую клетку можно поменять.</div>
 
   <div class="gt">Герой на карточке</div>
   <div class="group">
@@ -734,6 +764,7 @@ const HEROES = [
 
 /* ---------------- icons (24×24 line paths, used in UI and on canvas) ---------------- */
 const ICONS = {
+  doc:{e:'📝',t:'Документ',p:'M7 3h7l5 5v13H7z M14 3v5h5 M10 12h6 M10 15.5h6 M10 19h4'},
   mic:{e:'🎤',t:'Микрофон',p:'M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z M5.5 11a6.5 6.5 0 0 0 13 0 M12 17.5V21 M8.5 21h7'},
   vinyl:{e:'💿',t:'Пластинка',p:'M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0z M9.5 12a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0z M6.3 12a5.7 5.7 0 0 1 5.7-5.7 M17.7 12a5.7 5.7 0 0 1-5.7 5.7'},
   headphones:{e:'🎧',t:'Наушники',p:'M4 15v-3a8 8 0 0 1 16 0v3 M4 15a2 2 0 0 1 2-2h1v7H6a2 2 0 0 1-2-2z M20 15a2 2 0 0 0-2-2h-1v7h1a2 2 0 0 0 2-2z'},
@@ -796,6 +827,8 @@ const DEF_S = {
   roundStep:1000, roundMode:'down',
   giftsOn:true, minProfit:0,
   heroOn:true, heroAuto:{icons:'cool', price:'ok', variants:'smile', list:'point'}, heroesCustom:[], heroV:2, ppV:2, glass:true,
+  pkg:{names:['Базовый','Оптимальный','Всё включено'], base:null, full:null, baseShift:0, fullShift:0,
+       extras:[{t:'Сценарный план', v:[1,1,0]}, {t:'Персональный сценарий', v:[0,0,1]}]},
   gifts:[
     {id:'love', label:'Подарок молодожёнам', title:'Трек «История вашей любви»', events:'Свадьба',
      desc:'Вместе с вами и гостями пишем слова о вашей истории, из них делается трек. Я презентую его в танцевальной части вечера.',
@@ -846,6 +879,7 @@ try {
   S.services.forEach(s => { if (s.minH === undefined){ s.minH = s.id === 'host' ? 2 : s.id === 'dj' ? 3 : 0; } });
   if (!Array.isArray(S.tiers)) S.tiers = clone(DEF_S.tiers);
   if (!Array.isArray(S.gifts)) S.gifts = clone(DEF_S.gifts);
+  S.pkg = Object.assign(clone(DEF_S.pkg), S.pkg || {}); if (!Array.isArray(S.pkg.names) || S.pkg.names.length !== 3) S.pkg.names = clone(DEF_S.pkg.names); if (!Array.isArray(S.pkg.extras)) S.pkg.extras = [];
   S.heroAuto = Object.assign(clone(DEF_S.heroAuto), S.heroAuto || {}); if (!Array.isArray(S.heroesCustom)) S.heroesCustom = [];
   if (v && v.S && !(v.S.ppV >= 2)){ S.ppMode = 'pct'; S.ppPct = 50; S.ppV = 2; }
   if (v && v.S && !(v.S.heroV >= 2)){ if (!S.heroAuto.list) S.heroAuto.list = 'point'; S.heroV = 2; } delete S.heroCorpOff;
@@ -943,13 +977,19 @@ function dateClash(c){ if (!c.date) return []; return H.filter(h => h.id !== c.i
 const VAR_NAMES = ['Базовый','Оптимальный','Всё включено'];
 /* variants follow «Оптимальный» (index 1): Базовый = only the host part of it, Всё включено = it plus every other service.
    Venue conditions (eventHour / fixed units) stay exactly as in «Оптимальный». A variant edited by hand keeps the edit. */
-function deriveVar(i, opt){
-  const out = {}, anyTier = S.services.some(x => x.tiers && (opt[x.id] || {}).on);
+/* venue conditions are the same in every package */
+const isCond = s => s.unit === 'eventHour' || s.id === 'travel';
+/* which services the packages take by default (Settings → Пакеты). base: null = host only; full: null = everything */
+function pkgBase(){ const b = S.pkg && S.pkg.base; return b && Object.keys(b).some(k => b[k]) ? b : {[hostId()]: true}; }
+function pkgFullHas(id){ const f = S.pkg && S.pkg.full; return f ? !!f[id] : true; }
+function deriveVar(i, opt, baseOverride){
+  const out = {}, base = baseOverride || pkgBase(), sh = i === 0 ? Math.min(0, Number(S.pkg.baseShift) || 0) : i === 2 ? Math.max(0, Number(S.pkg.fullShift) || 0) : 0;
   S.services.forEach(s => {
     const o = opt[s.id] || newSel(s), v = JSON.parse(JSON.stringify(o));
-    if (s.unit === 'eventHour' || s.unit === 'fixed'){ out[s.id] = v; return; }
-    if (i === 0) v.on = anyTier ? (!!s.tiers && !!o.on) : (s.unit === 'hour' && !!o.on);
-    else if (!v.on){ v.on = true; if (s.unit === 'piece' && !num(v.qty)) v.qty = 1; }
+    if (isCond(s)){ out[s.id] = v; return; }
+    if (i === 0) v.on = !!o.on && !!base[s.id];
+    else if (i === 2 && !v.on && pkgFullHas(s.id)){ v.on = true; if (s.unit === 'piece' && !num(v.qty)) v.qty = 1; }
+    if (sh && v.on && s.unit === 'hour'){ const h0 = (o.qty === '' || o.qty == null) ? num(C.hours) : num(o.qty); v.qty = Math.max(1, h0 + sh); }
     out[s.id] = v;
   });
   return out;
@@ -961,6 +1001,7 @@ function syncVars(){
     if (!v.manual && v.sig && i === a && JSON.stringify(v.sel) !== v.sig) v.manual = true;
     if (!v.manual){ v.sel = deriveVar(i, L[1].sel); v.sig = JSON.stringify(v.sel); } });
   C.sel = L[a].sel;
+  if (!Array.isArray(C.vars.extras)) C.vars.extras = JSON.parse(JSON.stringify(S.pkg.extras || []));
 }
 function varsOrderBroken(){
   if (!C.vars || C.vars.list.length !== 3) return false;
@@ -1112,6 +1153,7 @@ function refreshCalc(r){
     $('varAutoT').textContent = bad ? 'Цены вариантов идут не по возрастанию' : 'Этот вариант изменён вручную';
     $('varAutoS').textContent = bad ? 'Пересоберите, и «Базовый» и «Всё включено» снова встанут от «Оптимального»' : 'Пересобрать, чтобы он снова строился от «Оптимального»';
     if (C.vars.active === 1) $('varAutoS').textContent = bad ? 'Ручные правки в других вариантах сбили порядок. Пересоберите их от этого варианта' : $('varAutoS').textContent;
+    renderPkgTable();
   }
   const tierOn = S.services.some(s => s.tiers && selOf(C, s).on && !num(selOf(C, s).price));
   $('tierRow').hidden = !tierOn;
@@ -1362,7 +1404,7 @@ function drawCard(){
     const pad = IN;
     C.vars.list.forEach((v, vi) => {
       const rv = calcV(vi), mv = clientModel(rv), rec = C.vars.rec === vi;
-      x.font = F(500, 28); const rowsN = mv.L.length;
+      x.font = F(500, 28); const xs = (C.vars.extras || []).filter(e => e.v[vi] && String(e.t || '').trim()), rowsN = mv.L.length + xs.length;
       const h = pad + 44 + 18 + 74 + (mv.disc > 0 ? 40 : 0) + 18 + rowsN * 50 + pad - 8;
       x.fillStyle = rec ? rgba(A, dark ? .1 : .09) : th.tile; rr(x, P, y, CW, h, 32); x.fill();
       if (rec){ x.strokeStyle = At; x.lineWidth = 3; rr(x, P + 1.5, y + 1.5, CW - 3, h - 3, 31); x.stroke(); }
@@ -1378,6 +1420,7 @@ function drawCard(){
         x.font = F(500, 28); x.fillStyle = th.ink; x.fillText(l.name, P + pad + 50, yy);
         if (l.qtyText){ const nw = x.measureText(l.name).width; x.font = F(400, 25); x.fillStyle = th.mut; x.fillText(l.qtyText, P + pad + 50 + nw + 14, yy); }
       });
+      xs.forEach(e => { yy += 50; drawIcon(x, 'doc', P + pad + 16, yy - 10, 30, At); x.font = F(500, 28); x.fillStyle = th.ink; x.fillText(String(e.t).trim(), P + pad + 50, yy); });
       y += h + 20;
     });
     y += 6;
@@ -1545,7 +1588,7 @@ function clientText(){
     C.vars.list.forEach((v, vi) => {
       const rv = calcV(vi), mv = clientModel(rv);
       out.push((C.vars.rec === vi ? '⭐ ' : '') + 'Вариант «' + v.name + '»: ' + rub(rv.total) + (C.vars.rec === vi ? ' (чаще выбирают)' : ''));
-      out.push(mv.L.map(l => (S.emoji ? (ICONS[l.icon] || ICONS.star).e + ' ' : '') + l.name + (l.qtyText ? ' (' + l.qtyText + ')' : '')).join(', '));
+      out.push(mv.L.map(l => (S.emoji ? (ICONS[l.icon] || ICONS.star).e + ' ' : '') + l.name + (l.qtyText ? ' (' + l.qtyText + ')' : '')).concat((C.vars.extras || []).filter(e => e.v[vi] && String(e.t || '').trim()).map(e => (S.emoji ? (ICONS.doc || ICONS.star).e + ' ' : '') + String(e.t).trim())).join(', '));
       out.push('');
     });
     out.pop();
@@ -1628,6 +1671,51 @@ function renderHeroSettings(){
   $('heroMine').innerHTML = (S.heroesCustom || []).map(h => '<div class="hmine"><img alt="" src="'+h.src+'"><span class="grow">'+esc(h.name)+'</span><button type="button" class="linkbtn" data-hdel="'+h.id+'">Удалить</button></div>').join('') ||
     '<div class="sub">Свои картинки появятся здесь</div>';
 }
+/* ---------------- package table: services × packages ---------------- */
+function pkgCellOpts(s, st){
+  const on = st && st.on, hourly = s.unit === 'hour';
+  const cur = !on ? '' : hourly ? String((st.qty === '' || st.qty == null) ? num(C.hours) : num(st.qty)) : s.unit === 'piece' ? String(num(st.qty) || 1) : '1';
+  let o = ['<option value="">нет</option>'];
+  if (hourly){ const set = new Set([1,2,3,4,5,6,7,8,9,10,11,12]); if (cur) set.add(num(cur)); [...set].sort((a,b) => a-b).forEach(h => o.push('<option value="'+h+'">'+hfmt(h)+' ч</option>')); }
+  else if (s.unit === 'piece'){ for (let k = 1; k <= 6; k++) o.push('<option value="'+k+'">'+k+' '+esc(s.unitName || 'шт')+'</option>'); }
+  else o.push('<option value="1">✓</option>');
+  return {html:o.join(''), cur};
+}
+function renderPkgTable(){
+  const box = $('pkgTable'); if (!box || !C.vars) return;
+  if (box.contains(document.activeElement)) return;
+  const L = C.vars.list, tot = L.map((v, i) => calcV(i).total);
+  let h = '<div class="pk-row pk-head"><span></span>' + L.map((v, i) => '<b class="'+(C.vars.rec === i ? 'rec' : '')+'">'+esc(v.name)+'<small>'+rub(tot[i])+'</small>'+(i !== 1 && v.manual ? '<em>вручную</em>' : '')+'</b>').join('') + '</div>';
+  S.services.filter(s => !isCond(s)).forEach(s => {
+    h += '<div class="pk-row"><span class="pk-n">'+esc(s.name)+'</span>' + L.map((v, i) => { const c = pkgCellOpts(s, v.sel[s.id]);
+      return '<select class="pk-c'+(c.cur ? ' on' : '')+'" data-pk="'+i+'" data-svc="'+s.id+'" aria-label="'+esc(s.name)+', '+esc(v.name)+'">'+c.html.replace('value="'+c.cur+'"', 'value="'+c.cur+'" selected')+'</select>'; }).join('') + '</div>';
+  });
+  (C.vars.extras || []).forEach((e, k) => {
+    h += '<div class="pk-row pk-xr"><div class="pk-xn"><input class="pk-t" data-pkx-t="'+k+'" value="'+esc(e.t)+'" aria-label="Пункт без цены"><button type="button" class="pk-del" data-pkx-del="'+k+'" aria-label="Убрать пункт">×</button></div><span></span>' +
+      [0,1,2].map(i => '<button type="button" class="pk-c pk-b'+(e.v[i] ? ' on' : '')+'" data-pkx="'+k+'" data-i="'+i+'" aria-pressed="'+!!e.v[i]+'">'+(e.v[i] ? '✓' : 'нет')+'</button>').join('') + '</div>';
+  });
+  const cond = S.services.filter(s => isCond(s) && selOf(C, s).on);
+  h += '<div class="pk-foot">' + (cond.length ? 'Одинаково во всех пакетах: ' + cond.map(s => esc(clientName(s, selOf(C, s)) || s.name).toLowerCase()).join(', ') + '. ' : '') + 'Пункты без цены (сценарий и т. п.) видны клиенту и не меняют сумму.</div>';
+  box.innerHTML = h;
+}
+function clientName(s, st){ return (st && st.cname) || s.name; }
+function renderPkgSettings(){
+  const box = $('pkgSet'); if (!box || box.contains(document.activeElement)) return;
+  const P = S.pkg, svcs = S.services.filter(s => !isCond(s)), base = pkgBase();
+  const sh = (k, opts) => '<select class="in" style="max-width:40%" data-pksh="'+k+'">' + opts.map(v => '<option value="'+v+'"'+((Number(P[k]) || 0) === v ? ' selected' : '')+'>'+(v === 0 ? 'как в Оптимальном' : (v > 0 ? '+' : '') + v + ' ч')+'</option>').join('') + '</select>';
+  box.innerHTML =
+    [0,1,2].map(i => '<div class="row"><span class="lbl grow">'+['Первый пакет','Средний пакет','Третий пакет'][i]+'</span><input class="in" style="max-width:55%" data-pkn="'+i+'" value="'+esc(P.names[i] || '')+'" aria-label="Название пакета '+(i+1)+'"></div>').join('') +
+    '<div class="field"><label>Что входит</label><div class="pkc"><span></span><span class="h">'+esc(P.names[0] || VAR_NAMES[0])+'</span><span class="h">'+esc(P.names[2] || VAR_NAMES[2])+'</span>' +
+      svcs.map(s => '<span>'+esc(s.name)+'</span><input type="checkbox" data-pkb="'+s.id+'"'+(base[s.id] ? ' checked' : '')+' aria-label="'+esc(s.name)+' в первом пакете"><input type="checkbox" data-pkf="'+s.id+'"'+(pkgFullHas(s.id) ? ' checked' : '')+' aria-label="'+esc(s.name)+' в третьем пакете">').join('') +
+    '</div><div class="sub" style="margin-top:6px">Первый пакет берёт отмеченное из «'+esc(P.names[1] || VAR_NAMES[1])+'», третий добавляет отмеченное к нему</div></div>' +
+    '<div class="row"><span class="lbl grow">Часы: '+esc(P.names[0] || VAR_NAMES[0])+'</span>' + sh('baseShift', [0,-1,-2,-3]) + '</div>' +
+    '<div class="row"><span class="lbl grow">Часы: '+esc(P.names[2] || VAR_NAMES[2])+'</span>' + sh('fullShift', [0,1,2,3]) + '</div>' +
+    '<div class="field"><label>Пункты без цены</label><div class="pk">' +
+      '<div class="pk-row pk-head"><span></span>' + [0,1,2].map(i => '<b>'+esc(P.names[i] || VAR_NAMES[i])+'</b>').join('') + '</div>' +
+      P.extras.map((e, k) => '<div class="pk-row pk-xr"><div class="pk-xn"><input class="pk-t" data-dx-t="'+k+'" value="'+esc(e.t)+'" aria-label="Пункт без цены"><button type="button" class="pk-del" data-dx-del="'+k+'" aria-label="Убрать пункт">×</button></div><span></span>' +
+        [0,1,2].map(i => '<button type="button" class="pk-c pk-b'+(e.v[i] ? ' on' : '')+'" data-dx="'+k+'" data-i="'+i+'" aria-pressed="'+!!e.v[i]+'">'+(e.v[i] ? '✓' : 'нет')+'</button>').join('') + '</div>').join('') +
+    '</div><div class="pk-acts"><button type="button" class="btn sm" id="pkgDefAdd">+ Пункт без цены</button></div></div>';
+}
 /* ---------------- settings view ---------------- */
 function buildAccents(){
   $('accents').innerHTML = ACCENTS.map(c => '<button type="button" data-accent="'+c+'" style="background:'+c+'" aria-label="Цвет '+c+'"></button>').join('') +
@@ -1697,7 +1785,7 @@ function buildTiers(){
   if (typeof fmtInputs === "function") setTimeout(fmtInputs, 0);
 }
 function fillSettings(){
-  renderHeroSettings();
+  renderHeroSettings(); renderPkgSettings();
   document.querySelectorAll('[data-s]').forEach(el => {
     if (document.activeElement === el) return;
     const k = el.dataset.s;
@@ -1931,11 +2019,49 @@ $('tierSeg').addEventListener('click', e => { const b = e.target.closest('[data-
 $('cStatus').addEventListener('change', e => { setStatus(C, e.target.value); update(); });
 $('varOn').addEventListener('change', e => {
   if (e.target.checked){
-    C.vars = {active:1, rec:1, list:[{name:VAR_NAMES[0], sel:deriveVar(0, C.sel)}, {name:VAR_NAMES[1], sel:C.sel}, {name:VAR_NAMES[2], sel:deriveVar(2, C.sel)}]};
+    const N = (S.pkg && S.pkg.names) || VAR_NAMES;
+    C.vars = {active:1, rec:1, extras:JSON.parse(JSON.stringify(S.pkg.extras || [])), list:[{name:N[0] || VAR_NAMES[0], sel:deriveVar(0, C.sel)}, {name:N[1] || VAR_NAMES[1], sel:C.sel}, {name:N[2] || VAR_NAMES[2], sel:deriveVar(2, C.sel)}]};
     if (S.mode !== 'variants') S.mode = 'variants';
   } else { C.vars = null; if (S.mode === 'variants') S.mode = 'icons'; }
   update();
 });
+$('pkgRebuild').addEventListener('click', () => { if (!C.vars) return; C.vars.list.forEach(v => { v.manual = false; v.sig = null; }); update(); });
+$('pkgSet').addEventListener('change', e => {
+  const t = e.target, P = S.pkg;
+  if (t.dataset.pkb){ const b = Object.assign({}, pkgBase()); b[t.dataset.pkb] = t.checked; P.base = b; }
+  else if (t.dataset.pkf){ const f = P.full ? Object.assign({}, P.full) : Object.fromEntries(S.services.map(s => [s.id, true])); f[t.dataset.pkf] = t.checked; P.full = f; }
+  else if (t.dataset.pksh){ P[t.dataset.pksh] = Number(t.value) || 0; t.blur(); }
+  else if (t.dataset.pkn != null){ P.names[+t.dataset.pkn] = t.value.trim() || VAR_NAMES[+t.dataset.pkn]; }
+  else return;
+  update();
+});
+$('pkgSet').addEventListener('input', e => { const t = e.target; if (t.dataset.dxT != null){ S.pkg.extras[+t.dataset.dxT].t = t.value; persist(); } });
+$('pkgSet').addEventListener('click', e => {
+  if (e.target.id === 'pkgDefAdd'){ S.pkg.extras.push({t:'Новый пункт', v:[0,1,1]}); update(); return; }
+  const b = e.target.closest('[data-dx],[data-dx-del]'); if (!b) return;
+  if (b.dataset.dxDel != null) S.pkg.extras.splice(+b.dataset.dxDel, 1);
+  else { const it = S.pkg.extras[+b.dataset.dx], i = +b.dataset.i; it.v[i] = it.v[i] ? 0 : 1; }
+  update();
+});
+$('pkgTable').addEventListener('change', e => {
+  const t = e.target; if (!C.vars) return;
+  if (t.dataset.pk != null){
+    const i = +t.dataset.pk, s = S.services.find(x => x.id === t.dataset.svc), v = C.vars.list[i]; if (!s) return;
+    const st = v.sel[s.id] || (v.sel[s.id] = newSel(s));
+    if (t.value === ''){ st.on = false; } else { st.on = true; if (s.unit === 'hour' || s.unit === 'piece') st.qty = (s.unit === 'hour' && i === 1 && num(t.value) === num(C.hours)) ? '' : num(t.value); }
+    if (i !== 1){ v.manual = true; }
+    t.blur(); update(); return;
+  }
+});
+$('pkgTable').addEventListener('input', e => { const t = e.target; if (t.dataset.pkxT != null && C.vars){ C.vars.extras[+t.dataset.pkxT].t = t.value; persist(); scheduleDraw(); } });
+$('pkgTable').addEventListener('focusout', e => { if (e.target.dataset && e.target.dataset.pkxT != null) setTimeout(update, 0); });
+$('pkgTable').addEventListener('click', e => {
+  const b = e.target.closest('[data-pkx],[data-pkx-del]'); if (!b || !C.vars) return;
+  if (b.dataset.pkxDel != null){ C.vars.extras.splice(+b.dataset.pkxDel, 1); update(); return; }
+  const it = C.vars.extras[+b.dataset.pkx], i = +b.dataset.i; it.v[i] = it.v[i] ? 0 : 1; update();
+});
+$('pkgAddX').addEventListener('click', () => { if (!C.vars) return; C.vars.extras.push({t:'Новый пункт', v:[0,1,1]}); update(); setTimeout(() => { const ins = $('pkgTable').querySelectorAll('.pk-t'); const last = ins[ins.length - 1]; if (last){ last.focus(); last.select(); } }, 30); });
+$('pkgHostOnly').addEventListener('click', () => { if (!C.vars) return; const L = C.vars.list; L[0].sel = deriveVar(0, L[1].sel, {[hostId()]: true}); L[0].manual = true; L[0].sig = JSON.stringify(L[0].sel); if (C.vars.active === 0) C.sel = L[0].sel; update(); });
 $('varRebuild').addEventListener('click', () => { if (!C.vars) return; C.vars.list.forEach(v => { v.manual = false; v.sig = null; }); update(); });
 // reset this calculation to the defaults from settings, event details stay
 let resetUndo = null, resetT = 0;
